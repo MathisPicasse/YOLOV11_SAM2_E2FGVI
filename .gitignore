@@ -1,0 +1,48 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.pyd
+
+# === Jupyter Notebooks Checkpoints ===
+.ipynb_checkpoints/
+
+# === Pytorch  ===
+*.pth
+*.pt
+*.ckpt
+*.onnx
+
+# === Pyenv / Virtualenv ===
+.python-version
+.venv/
+env/
+venv/
+ENV/
+env_YOLO11_SAM2_E2FGVI/
+
+# === VSCode / IDE ===
+.vscode/
+.idea/
+*.code-workspace
+
+# === Logs / Outputs ===
+*.log
+logs/
+outputs/
+Outputs/
+
+# === Données ===
+Dataset/raw/
+Dataset/processed/
+*.zip
+*.tar.gz
+*.npy
+*.npz
+*.csv
+*.pkl
+
