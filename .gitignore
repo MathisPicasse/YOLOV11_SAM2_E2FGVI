@@ -36,7 +36,10 @@ logs/
 outputs/
 Outputs/
 
+
 # === Données ===
+models/
+docs/
 Dataset/raw/
 Dataset/processed/
 *.zip
