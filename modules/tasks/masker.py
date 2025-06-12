@@ -58,7 +58,7 @@ class Masker:
         """
         return self._model.info()
 
-    def create_mask(self, frame: np.ndarray, obs: Observation) -> np.ndarray:
+    def create_mask(self, frame: np.ndarray, obs: Observation, output_path: str, mask_name) -> np.ndarray:
         """
         Generates a binary mask for the given observation (bounding box).
         
@@ -90,5 +90,14 @@ class Masker:
             return np.zeros(frame.shape[:2], dtype=np.uint8)
 
         # Take the first mask in the batch
-        mask = mask_np[0].astype(np.uint8)
+        mask = (mask_np[0] * 255).astype(np.uint8)
+        if not os.path.exists(output_path):
+            print("created the folder")
+            os.makedirs(output_path)
+        save = cv2.imwrite(f"{output_path}/{mask_name}", mask)
+        print("Mask saved:", save)
+        if not save:
+            print("Failed to save mask.")
+        else:
+            print("mask saved")
         return mask

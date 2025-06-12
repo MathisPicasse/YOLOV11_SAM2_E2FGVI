@@ -98,3 +98,5 @@ class Entity:
 
         if verbose:
             print(f"Added observation to entity {self._entity_id}: {observation}")
+        
+        

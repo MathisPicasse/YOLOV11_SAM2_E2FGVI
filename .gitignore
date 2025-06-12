@@ -40,8 +40,8 @@ Outputs/
 # === Données ===
 models/
 docs/
-Dataset/raw/
-Dataset/processed/
+dataset/raw/
+dataset/processed/
 *.zip
 *.tar.gz
 *.npy
