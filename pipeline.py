@@ -8,20 +8,20 @@ from modules.utils.video import create_frames, create_video
 
 
 # === Paths Configuration ===
-VIDEO_PATH = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/people_edited_resize.mp4"
+VIDEO_PATH = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/MOT20_edited_resize.mp4"
 YOLO_MODEL_PATH = "models/YOLO11v/yolo11n.pt"
 TRACKER_CONFIG_PATH = "configs/trackers/botsort.yaml"
 MASK_MODEL = "sam2.1_b.pt"
-MASKS_OUTPUT = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/mask_people_resize"
+MASKS_OUTPUT = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/mask_MOT20_resize"
 
 # === Preprocessing ===
 #The aim of this part is to downsize images and to create a new video from the newly created downsized images.
 #This will help to speed up the computation ie the detection and the segmentation.
-cap = cv2.VideoCapture(VIDEO_PATH)
-fps = cap.get(cv2.CAP_PROP_FPS)
-cap.release()
-create_frames("/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/people_frame", "people", "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/people_edited.mp4", resize_dim=(512,512))
-create_video("/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/people_frame", "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/people_edited_resize.mp4", "people", fps=fps, codec='mp4v')
+# cap = cv2.VideoCapture(VIDEO_PATH)
+# fps = cap.get(cv2.CAP_PROP_FPS)
+# cap.release()
+# #create_frames("/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/MOT20_frame", "MOT20", "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/MOT20.mp4", resize_dim=(512,512))
+# create_video("/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/MOT20_frame", "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/MOT20_edited_resize.mp4", "MOT20", fps=fps, codec='mp4v')
 
 # === Module Initialization ===
 detector = YoloDetector(YOLO_MODEL_PATH)
