@@ -34,7 +34,6 @@ env_YOLO11_SAM2_E2FGVI/
 *.log
 logs/
 outputs/
-Outputs/
 
 
 # === Données ===
