@@ -1,0 +1,14 @@
+train:
+  - train/MOT20-01_yolo/images
+val:
+  - val/MOT20-03_yolo/images
+test: ''
+nc: 7
+names:
+  - pedestrian
+  - person on vehicle
+  - car
+  - bicycle
+  - motorcycle
+  - static person
+  - crowd
