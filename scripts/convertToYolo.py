@@ -28,15 +28,15 @@ def map_classes(
     mot_classes: Dict[Union[str, int], str]
 ) -> Tuple[Dict[int, int], Dict[int, str]]:
     """
-    Maps original class IDs to new sequential IDs and provides a name mapping.
+    Maps original class IDs to new sequential IDs, merging classes with the same name.
 
     This function takes a dictionary of original class IDs (which can be
     strings or integers representing class identifiers) and their corresponding
     class names. It produces two dictionaries:
     1. A mapping from the original class ID (coerced to an integer) to a new,
-       zero-based sequential integer ID.
-    2. A mapping from this new sequential ID to the original class name.
-    The order of new IDs is based on the iteration order of the input dictionary.
+       zero-based sequential integer ID. If multiple original IDs share the
+       same class name, they will all map to the same new ID.
+    2. A mapping from this new sequential ID to the unique class name.
 
     Args:
         mot_classes (Dict[Union[str, int], str]): A dictionary where keys
@@ -50,7 +50,7 @@ def map_classes(
             - original_to_new_id_map (Dict[int, int]): Maps original
               integer class IDs to new zero-based sequential IDs.
             - new_id_to_name_map (Dict[int, str]): Maps new zero-based
-              sequential IDs to their class names.
+              sequential IDs to their unique class names.
 
     Raises:
         TypeError: If `mot_classes` is not a dictionary.
@@ -58,25 +58,42 @@ def map_classes(
                     integer.
 
     Example:
-        >>> classes1 = {'1': 'car', '7': 'person', 2: 'bicycle'}
-        >>> id_map1, name_map1 = map_classes(classes1)
-        >>> id_map1 is {1: 0, 7: 1, 2: 2}
-        >>> name_map1 is {0: 'car', 1: 'person', 2: 'bicycle'}
+        >>> # With class merging
+        >>> classes_to_merge = {'0': 'person', '1': 'car', '7': 'person'}
+        >>> id_map, name_map = map_classes(classes_to_merge)
+        >>> id_map
+        {0: 0, 1: 1, 7: 0}
+        >>> name_map
+        {0: 'person', 1: 'car'}
     """
     if not isinstance(mot_classes, dict):
         raise TypeError("Input 'mot_classes' must be a dictionary.")
 
+    # This will map original IDs (e.g., 7) to new YOLO IDs (e.g., 0)
     original_to_new_id_map: Dict[int, int] = {}
+    # This will map new YOLO IDs (e.g., 0) to class names (e.g., "person")
     new_id_to_name_map: Dict[int, str] = {}
-    
-    new_class_id_counter  = 0
-    # Iterate through items, providing both original ID key and class name.
+    # This auxiliary dict helps us find the new ID for a given name efficiently
+    name_to_new_id_map: Dict[str, int] = {}
+
+    new_class_id_counter = 0
     for original_id_key, class_name in mot_classes.items():
         original_id_int = int(original_id_key)
-        original_to_new_id_map[original_id_int] = new_class_id_counter
-        new_id_to_name_map[new_class_id_counter] = class_name
-        new_class_id_counter += 1
-        
+        # Check if we have already assigned a new ID to this class name
+        if class_name in name_to_new_id_map:
+            # If yes, get the existing new ID
+            existing_new_id = name_to_new_id_map[class_name]
+            # Map the current original ID to that existing new ID
+            original_to_new_id_map[original_id_int] = existing_new_id
+        else:
+            # If this is a new class name, assign it the next available new ID
+            new_id = new_class_id_counter
+            # Store the mappings
+            name_to_new_id_map[class_name] = new_id
+            new_id_to_name_map[new_id] = new_id
+            original_to_new_id_map[original_id_int] = new_id
+            new_class_id_counter += 1
+
     return original_to_new_id_map, new_id_to_name_map
 
 
