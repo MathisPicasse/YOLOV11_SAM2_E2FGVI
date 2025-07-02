@@ -69,19 +69,10 @@ def map_classes(
     original_to_new_id_map: Dict[int, int] = {}
     new_id_to_name_map: Dict[int, str] = {}
     
-    new_class_id_counter: int = 0
+    new_class_id_counter  = 0
     # Iterate through items, providing both original ID key and class name.
     for original_id_key, class_name in mot_classes.items():
-        try:
-            # Ensure the original ID is an integer for consistent mapping keys.
-            original_id_int: int = int(original_id_key)
-        except ValueError as e:
-            # Provide context if a key cannot be converted to an integer.
-            raise ValueError(
-                f"Key '{original_id_key}' in 'mot_classes' cannot be "
-                f"converted to an integer."
-            ) from e
-        
+        original_id_int = int(original_id_key)
         original_to_new_id_map[original_id_int] = new_class_id_counter
         new_id_to_name_map[new_class_id_counter] = class_name
         new_class_id_counter += 1
