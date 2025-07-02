@@ -16,10 +16,10 @@ JSON_CONFIG_FILE = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_
 # Define output paths for this test script (can be different from main conversion)
 # These are example paths; adjust as needed.
 # It's often good to use a dedicated 'test_outputs' directory.
-TEST_IMG_DIR = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/train/MOT20-01_yolo/images"
-TEST_ANNOTATIONS_DIR = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/train/MOT20-01_yolo/labels"
-TEST_OUTPUT_VIDEO = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/outputs/test_MOT20-01_yolo_annotated.mp4"
-VIDEO_PREFIX = "MOT20-01" # This should match the prefix of your images in TEST_IMG_DIR
+TEST_IMG_DIR = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/val/MOT17-09_yolo/images"
+TEST_ANNOTATIONS_DIR = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/val/MOT17-09_yolo/labels"
+TEST_OUTPUT_VIDEO = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/outputs/test_MOT17-09_yolo_annotated.mp4"
+VIDEO_PREFIX = "MOT17-09" # This should match the prefix of your images in TEST_IMG_DIR
 VIDEO_FPS = 30
 VIDEO_CODEC = 'mp4v' # Common codec for .mp4 files
 

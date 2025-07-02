@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # --- Configuration ---
 DEFAULT_MODEL_NAME: str = "yolo11n"
-DEFAULT_PATH_TO_MODEL_TEMPLATE: str = f"/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/models/dectection/YOLO11v/{DEFAULT_MODEL_NAME}.pt"
+DEFAULT_PATH_TO_MODEL_TEMPLATE: str = f"/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/models/detection/YOLO11v/{DEFAULT_MODEL_NAME}.pt"
 DEFAULT_DATASET_YAML: str = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/dataset.yaml"  
 DEFAULT_PROJECT_TEMPLATE: str = f"run/detect/{DEFAULT_MODEL_NAME}"  
 
@@ -24,8 +24,8 @@ except Exception as e:
 
 training_parameters: Dict[str, Any] = {
         "data": DEFAULT_DATASET_YAML,
-        "epochs": 1,            # Number of training epochs
-        "patience": 30,         # Epochs to wait for no observable improvement before early stopping
+        "epochs": 200,            # Number of training epochs
+        "patience": 50,         # Epochs to wait for no observable improvement before early stopping
         "batch": 16,            # Batch size (adjust based on available GPU memory)
         "imgsz": 640,           # Input image size (square images, e.g., 640x640)
         "save": True,           # Save training artifacts (checkpoints, logs, etc.)
@@ -41,5 +41,3 @@ training_parameters: Dict[str, Any] = {
 # --- Training ---
 model.train(**training_parameters)
 
-# --- evaluation --
-evaluation = model.val()

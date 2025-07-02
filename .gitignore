@@ -17,6 +17,8 @@ build/
 *.ckpt
 *.onnx
 
+
+
 # === Pyenv / Virtualenv ===
 .python-version
 .venv/
@@ -48,3 +50,8 @@ dataset/processed/
 *.csv
 *.pkl
 
+# === Training ===
+training/
+
+
+tests/

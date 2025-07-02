@@ -1,0 +1,17 @@
+ {
+    "PathToDataFolders": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/final_MOT_dataset/test",
+    "Folders": {
+        "MOT17-04": [1920, 1080], 
+        "MOT17-09": [1920, 1080]
+    },
+    "OutputDir": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/val",
+    "Classes": {
+        "1": "person",
+        "2": "car",
+        "3": "bicycle",
+        "4": "motorcycle"
+    },
+    "ResizeImages": true,
+    "TargetSize": [640,640], 
+    "SubsampleRate": 5
+ }

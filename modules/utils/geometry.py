@@ -114,7 +114,14 @@ def normalize_bbox_coordinates(
     w_box_norm: float = w_box / img_width
     h_box_norm: float = h_box / img_height
 
-    return x_center_norm, y_center_norm, w_box_norm, h_box_norm
+    # return x_center_norm, y_center_norm, w_box_norm, h_box_norm
+
+    x_center_norm_clamped = max(0.0, min(1.0, x_center_norm))
+    y_center_norm_clamped = max(0.0, min(1.0, y_center_norm))
+    w_box_norm_clamped = max(0.0, min(1.0, w_box_norm))
+    h_box_norm_clamped = max(0.0, min(1.0, h_box_norm))
+
+    return x_center_norm_clamped, y_center_norm_clamped, w_box_norm_clamped, h_box_norm_clamped
 
 def denormalize_bbox_coordinates(
     x_center_norm: float,

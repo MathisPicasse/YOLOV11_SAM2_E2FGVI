@@ -24,8 +24,6 @@ from modules.utils.geometry import rescale_bbox_coordinates, normalize_bbox_coor
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-
-
 def map_classes(
     mot_classes: Dict[Union[str, int], str]
 ) -> Tuple[Dict[int, int], Dict[int, str]]:
@@ -236,7 +234,8 @@ def convert_to_yolo(
     original_img_height: int, # Renamed for clarity
     mapped_dict: Dict[int, int],
     resize_img: bool = False,
-    target_size: Optional[Tuple[int, int]] = (640, 640) # Made Optional to align with docstring
+    target_size: Optional[Tuple[int, int]] = (640, 640), # Made Optional to align with docstring
+    subsample_rate: Optional[int] = None
 ) -> None:
     """
     Converts a dataset from MOT format to YOLO object detection format.
@@ -258,8 +257,10 @@ def convert_to_yolo(
         resize_img (bool): If True, images and bounding boxes will be resized
                            to `target_size`. Defaults to False.
         target_size (Optional[Tuple[int, int]]): Target (width, height) for resizing.
-                                     Used only if `resize_img` is True.
-                                     Defaults to (640, 640).
+                                     Used only if `resize_img` is True. Defaults to (640, 640).
+        subsample_rate (Optional[int]): If set to an integer N > 1, only 1 out of every N
+                                        frames will be processed. For example, a rate of 2
+                                        keeps frames 0, 2, 4, etc. Defaults to None (all frames).
 
     Raises:
         FileNotFoundError: If `img_dir` or `annotations_file` does not exist.
@@ -312,9 +313,16 @@ def convert_to_yolo(
     
     logging.info(f"Processing images from: {img_dir}")
     processed_image_count = 0
-    for img_filename in sorted(os.listdir(img_dir)):
-        if not img_filename.lower().endswith(('.jpg', '.jpeg', '.png')):
-            logging.debug(f"Skipping non-image file: {img_filename}")
+    
+    # Get a sorted list of image files to ensure consistent order for subsampling
+    image_files = sorted([
+        f for f in os.listdir(img_dir) 
+        if f.lower().endswith(('.jpg', '.jpeg', '.png'))
+    ])
+
+    for i, img_filename in enumerate(image_files):
+        # If subsampling is enabled, skip frames that are not on the interval
+        if subsample_rate and (i % subsample_rate != 0):
             continue
 
         full_img_path = os.path.join(img_dir, img_filename)
@@ -407,6 +415,10 @@ def _validate_config(config: Dict[str, Any]) -> None:
                 all(isinstance(dim, int) and dim > 0 for dim in config["TargetSize"])):
             raise ValueError("'TargetSize' must be a list of two positive integers [width, height].")
 
+    if "SubsampleRate" in config:
+        if not (isinstance(config["SubsampleRate"], int) and config["SubsampleRate"] > 1):
+            raise ValueError("'SubsampleRate' must be an integer greater than 1.")
+
     for folder_name, dims in config["Folders"].items():
         if not (isinstance(dims, list) and len(dims) == 2 and
                 all(isinstance(d, int) and d > 0 for d in dims)):
@@ -457,6 +469,10 @@ def main():
     base_data_path = config_data["PathToDataFolders"]
     yolo_output_root = config_data["OutputDir"]
     resize_images = config_data["ResizeImages"]
+    subsample_rate = config_data.get("SubsampleRate") # Can be None if not present
+
+    if subsample_rate:
+        logging.info(f"Subsampling enabled: keeping 1 of every {subsample_rate} frames.")
     
     # Prepare target_size_tuple once
     target_size_tuple: Optional[Tuple[int, int]] = None
@@ -484,6 +500,8 @@ def main():
         logging.info(f"Resize images: {resize_images}")
         if resize_images:
             logging.info(f"Target size for resize: {target_size_tuple}")
+        if subsample_rate:
+            logging.info(f"Subsampling rate: {subsample_rate}")
         
         try:
             convert_to_yolo(
@@ -495,7 +513,8 @@ def main():
                 original_img_height=original_img_height,
                 mapped_dict=original_to_yolo_ids,
                 resize_img=resize_images,
-                target_size=target_size_tuple
+                target_size=target_size_tuple,
+                subsample_rate=subsample_rate
             )
             processed_folders_count += 1
             logging.info(f"Successfully converted folder '{folder_name}'.")

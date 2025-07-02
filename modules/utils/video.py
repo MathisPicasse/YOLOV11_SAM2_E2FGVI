@@ -19,13 +19,16 @@ def create_frames(
     output_dir: str,
     frame_prefix: str,
     path_to_video: str,
-    resize_dim: Optional[Tuple[int, int]] = None) -> None:
+    resize_dim: Optional[Tuple[int, int]] = None,
+    target_fps: Optional[int] = None
+) -> None:
 
     """Extracts frames from a video file and saves them as images.
 
     This function reads a video from the specified path, extracts each frame,
     optionally resizes it, and saves it as a JPEG image in the output
-    directory. The output frames are named sequentially using the provided prefix.
+    directory. If `target_fps` is provided, it will subsample frames to
+    approximate the target frame rate.
 
     Args:
         output_dir: The directory where the extracted frames will be saved.
@@ -34,6 +37,9 @@ def create_frames(
         path_to_video: The full path to the input video file.
         resize_dim: An optional tuple (width, height) to resize the frames.
             If None, frames are saved with their original dimensions.
+        target_fps (Optional[int]): An optional integer for the desired frames per second.
+            If set, frames will be skipped to match this rate. If None, all
+            frames are extracted. Defaults to None.
 
     Raises:
         FileNotFoundError: If the specified `path_to_video` does not exist.
@@ -52,7 +58,30 @@ def create_frames(
     if not cap.isOpened():
         raise IOError(f"Cannot open the video file at: {path_to_video}")
 
-    frame_count = 0
+    source_fps = cap.get(cv2.CAP_PROP_FPS)
+    if source_fps <= 0:
+        logging.warning(
+            f"Video {path_to_video} has an invalid source FPS ({source_fps}). "
+            "Cannot use target_fps for subsampling. Extracting all frames."
+        )
+        target_fps = None  # Disable subsampling if source FPS is invalid
+
+    frame_skip_interval = 1
+    if target_fps and target_fps > 0:
+        if target_fps > source_fps:
+            cap.release()  # Release resource before raising
+            raise ValueError(f"Target FPS ({target_fps}) cannot be higher than source FPS ({source_fps:.2f}).")
+        
+        # Calculate how many frames to skip.
+        # e.g., source=30, target=15 -> interval=2. Keep every 2nd frame.
+        frame_skip_interval = round(source_fps / target_fps)
+        logging.info(
+            f"Source FPS: {source_fps:.2f}, Target FPS: {target_fps}. "
+            f"Extracting every {frame_skip_interval} frames."
+        )
+
+    frame_index = 0
+    saved_frame_count = 0
     while True:
         # Read the next frame from the video.
         is_frame_read, frame = cap.read()
@@ -60,18 +89,30 @@ def create_frames(
             # The video has ended.
             break
 
-        # If resize dimensions are provided, resize the frame.
-        if resize_dim:
-            frame = cv2.resize(frame, resize_dim)
+        # Check if this frame should be saved based on the calculated interval.
+        if frame_index % frame_skip_interval == 0:
+            # If resize dimensions are provided, resize the frame.
+            if resize_dim:
+                try:
+                    frame = cv2.resize(frame, resize_dim)
+                except cv2.error as e:
+                    logging.error(f"Failed to resize frame {frame_index}: {e}")
+                    frame_index += 1
+                    continue  # Skip this frame
 
-        # Construct the output filename with a zero-padded frame count for proper sorting.
-        frame_filename = os.path.join(output_dir, f"{frame_prefix}_{frame_count:05d}.jpg")
-        cv2.imwrite(frame_filename, frame)
-        frame_count += 1
+            # Use saved_frame_count for sequential numbering of output files.
+            frame_filename = os.path.join(output_dir, f"{frame_prefix}_{saved_frame_count:05d}.jpg")
+            if not cv2.imwrite(frame_filename, frame):
+                # Log a warning if a frame fails to save, but continue.
+                logging.warning(f"Could not write frame to {frame_filename}")
+            else:
+                saved_frame_count += 1
+        
+        frame_index += 1
     
     # Release the video capture object.
     cap.release()
-    logging.info(f"Successfully extracted {frame_count} frames to '{output_dir}'")
+    logging.info(f"Successfully extracted {saved_frame_count} frames to '{output_dir}'")
 
 
 def create_video(img_dir: str, output_video: str, prefix: str, fps: int, codec: str) -> None:
