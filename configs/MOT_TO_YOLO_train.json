@@ -1,15 +1,13 @@
  {
     "PathToDataFolders": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/final_MOT_dataset/train",
     "Folders": {
-        "MOT17-02": [1920, 1080],  
+        "MOT17-02": [1920, 1080],
+        "MOT17-05": [640, 480], 
         "MOT17-10": [1920, 1080], 
-        "MOT17-11": [1920, 1080], 
-        "MOT17-05": [640, 480],
-        "MOT17-13": [1920, 1080],
+        "MOT17-13": [1920, 1080], 
         "MOT20-01": [1920, 1080], 
         "MOT20-02": [1920, 1080], 
-        "MOT20-03": [1173, 880], 
-        "MOT20-05": [1654, 1080]
+        "MOT20-05": [1654, 1080] 
     },
     "OutputDir": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/train",
     "Classes": {
@@ -18,5 +16,5 @@
     },
     "ResizeImages": true,
     "TargetSize": [854,480], 
-    "SubsampleRate": 15
+    "SubsampleRate": 7
  }

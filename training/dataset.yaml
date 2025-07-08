@@ -3,20 +3,15 @@ train:
   - train/MOT17-02_yolo/images
   - train/MOT17-05_yolo/images
   - train/MOT17-10_yolo/images
-  - train/MOT17-11_yolo/images
   - train/MOT17-13_yolo/images
   - train/MOT20-01_yolo/images
   - train/MOT20-02_yolo/images
-  - train/MOT20-03_yolo/images
   - train/MOT20-05_yolo/images
 val:
   - val/MOT17-04_yolo/images
   - val/MOT17-09_yolo/images
 test: ""
-nc: 4
+nc: 1
 names:
-  - pedestrian
-  - car
-  - bicycle
-  - motorcycle
+  - person
 

@@ -1,7 +1,7 @@
  {
-    "PathToDataFolders": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/final_MOT_dataset/test",
+    "PathToDataFolders": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/final_MOT_dataset/val",
     "Folders": {
-        "MOT17-04": [1920, 1080], 
+        "MOT17-04": [1920, 1080],
         "MOT17-09": [1920, 1080]
     },
     "OutputDir": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/val",
