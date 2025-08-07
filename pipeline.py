@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__) # Use a logger instance
 
 #Workspace Configuration
 WORKSPACE = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI"
-DATA_PATH = f"{WORKSPACE}/dataset"
+DATA_PATH = f"{WORKSPACE}/dataset/raw"
 
 #Poject configuation
-PROJECT_NAME = "MOT20_edit"
-VIDEO_NAME = "MOT20_edited_resize.mp4"
-VIDEO_PATH = f"{DATA_PATH}/raw/{VIDEO_NAME}"
+PROJECT_NAME = "moi"
+VIDEO_NAME = "video_moi.mp4"
+VIDEO_PATH = f"{DATA_PATH}/{PROJECT_NAME}/{VIDEO_NAME}"
 
 #Detection configuration
 MODEL_NAME = "yolo11"
@@ -134,8 +134,8 @@ def main():
                 output_frame_dir=output_frame_dir,
                 output_video_path=output_video_path,
                 frame_prefix=frame_prefix,
-                target_size=(640, 640),
-                fps=30, # Now this FPS will be used for the output video if not None
+                target_size=(864, 480),
+                fps=25, # Now this FPS will be used for the output video if not None
                 codec='mp4v'
             )
             # Update the local variables to point to the processed video
@@ -165,7 +165,7 @@ def main():
         exit(1)
 
     # ===  Masking ===
-    target_tracker_ids = [1, 2, 3] # Example: Process tracker IDs 1, 2, and 3
+    target_tracker_ids = [1] # Example: Process tracker IDs 1, 2, and 3
     all_observations_for_targets: List[Observation] = []
     for tracker_id in target_tracker_ids:
         if tracker_id in results_formatted: # Corrected check

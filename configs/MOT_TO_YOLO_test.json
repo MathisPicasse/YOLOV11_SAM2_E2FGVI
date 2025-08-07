@@ -1,15 +1,17 @@
  {
     "PathToDataFolders": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/dataset/raw/final_MOT_dataset/test",
     "Folders": { 
-        "MOT17-11": [1920, 1080],
         "MOT20-03": [1173, 880]
     },
     "OutputDir": "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/test",
     "Classes": {
         "1": "person",
+        "2": "person",
         "7": "person"
     },
     "ResizeImages": true,
-    "TargetSize": [854,480], 
-    "SubsampleRate": 10
+    "TargetSize": [864,480], 
+    "SubsampleRate": 26
  }
+
+ 
