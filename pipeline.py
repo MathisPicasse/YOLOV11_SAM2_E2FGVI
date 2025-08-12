@@ -167,3 +167,8 @@ for target_entity_id in TARGETS_ENTITIES_IDS:
             )
             frame_idx += 1
     logger.info("######## PIPELINE FINISHED #######")
+
+
+# ========================================
+# INPAINTING MODULE
+# ========================================
