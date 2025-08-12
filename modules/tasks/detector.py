@@ -11,12 +11,8 @@ from abc import ABC, abstractmethod
 from .tracker import BaseTracker, UltralyticsTracker
 from typing import Optional, Dict, List
 from modules.data.observations import Observation
-import logging
+from modules.utils.logger_setup import logger
 
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
 
 class BaseDetector(ABC):
     """Abstract base class for all object detectors.
@@ -39,6 +35,7 @@ class YoloDetector(BaseDetector):
     Attributes:
         _model (YOLO): An instance of the Ultralytics YOLO detector.
     """
+
     def __init__(self, model_path: str):
         """
         Args:
@@ -69,8 +66,9 @@ class Detector:
     Attributes:
         _detector (BaseDetector): The detector used to extract object detections.
         _tracker (BaseTracker): The tracker responsible for associating detections over time.
-        _raw_results (Optional[list]): Raw tracking results after processing.
+        _raw_detections (Optional[list]): Raw tracking results after processing.
     """
+
     def __init__(self, detector: BaseDetector, tracker: BaseTracker):
         """
         Args:
@@ -79,7 +77,7 @@ class Detector:
         """
         self._detector = detector
         self._tracker = tracker
-        self._raw_results = None
+        self._raw_detections = None
 
     @property
     def detector(self) -> BaseDetector:
@@ -92,12 +90,13 @@ class Detector:
         return self._tracker
 
     @property
-    def raw_results(self) -> Optional[list]:
+    def raw_detections(self) -> Optional[list]:
         """Returns the raw tracking results."""
-        return self._raw_results
+        return self._raw_detections
 
-    def track(self, video):
-        """Runs detection and tracking on the input video.
+    def track(self, video, project):
+        """
+        Runs detection and tracking on the input video.
 
         Args:
             video: Input video file path or frame stream.
@@ -105,19 +104,62 @@ class Detector:
         Returns:
             List of tracking results per frame.
         """
-        self._raw_results = self.tracker.track(video, self.detector.model)
-        return self._raw_results
+        self._raw_detections = self.tracker.track(
+            video, self.detector.model, project)
+        return self._raw_detections
 
-    
-    def format_results(self)->Dict[int, Observation]:
-        formatted_results = dict()
-        for frame_id, results in enumerate(self._raw_results): 
-            for entity_id, class_id, bbox, confidence in zip(results.boxes.id, results.boxes.cls, results.boxes.xyxy, results.boxes.conf):
-                new_observation = Observation(frame_id, class_id, bbox, confidence)
-                if entity_id.item() in formatted_results:
-                    logging.info(f"entity {entity_id} detected again in frame {frame_id}")
-                    formatted_results[entity_id.item()].append(new_observation)
+    def group_detections_by_entity(self) -> Dict[int, Observation]:
+        """
+        Formats raw object detection results into a dictionary mapping entity IDs to their observations.
+
+        This function processes the raw detection results stored in `self._raw_results`.
+        For each frame, it iterates over all detected entities, extracting their ID,
+        class, bounding box coordinates, and confidence score. Each detection is
+        converted into an `Observation` object and added to the results dictionary.
+
+        If an entity ID has been detected in previous frames, the new observation
+        is appended to the existing list. Otherwise, a new list is created for that entity.
+
+        Args:
+            self: The class instance containing `_raw_results` as an iterable of detection outputs.
+                Each detection output must have `boxes.id`, `boxes.cls`, `boxes.xyxy`, and `boxes.conf`.
+
+        Returns:
+            Dict[int, List[Observation]]:  
+                A dictionary where:
+                - Key: `entity_id` (int) – Unique identifier of the tracked object.
+                - Value: List of `Observation` objects containing detection details for each frame.
+
+        Logging:
+            - Logs when an entity is detected for the first time in a frame.
+            - Logs when an entity is detected again in subsequent frames.
+        """
+
+        # Store the observations with a list by entity_id -> Dict[int, List[Observation]]
+        detections_by_entity = dict()
+
+        # Iterating through the results frame by frame
+        for frame_id, results in enumerate(self._raw_detections):
+            # Iterating through the detected entities in the frame
+            for entity_id, class_id, bbox, confidence in zip(
+                results.boxes.id,
+                results.boxes.cls,
+                results.boxes.xyxy,
+                results.boxes.conf
+            ):
+                # Create a new Observation object
+                new_observation = Observation(
+                    frame_id, class_id, bbox, confidence)
+
+                # If the entity has been detected before, append the new observation to its existing list
+                if entity_id.item() in detections_by_entity:
+                    logger.info(f"entity {entity_id} in frame {frame_id}")
+                    detections_by_entity[entity_id.item()].append(
+                        new_observation)
                 else:
-                    logging.info(f"new entity (id: {entity_id}) detected in frame {frame_id}")
-                    formatted_results[entity_id.item()] = [new_observation]
-        return formatted_results
+                    # If this is a new entity, create a new entry in the dictionary with its first observation
+                    logger.info(
+                        f"new entity (id: {entity_id}) in frame {frame_id}"
+                    )
+                    detections_by_entity[entity_id.item()] = [new_observation]
+        return detections_by_entity

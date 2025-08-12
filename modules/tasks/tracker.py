@@ -9,6 +9,7 @@ Description: Define the tracker classes with base abstract class and implementat
 from abc import ABC, abstractmethod
 from typing import Any
 
+
 class BaseTracker(ABC):
     """Abstract base class for tracker implementations."""
 
@@ -40,7 +41,7 @@ class UltralyticsTracker(BaseTracker):
     def tracker_name(self) -> str:
         return self._tracker_name
 
-    def track(self, source: Any, detector_model: Any) -> Any:
+    def track(self, source: Any, detector_model: Any, project) -> Any:
         """Track objects on the source video using the Ultralytics model and tracker.
 
         Args:
@@ -50,7 +51,7 @@ class UltralyticsTracker(BaseTracker):
         Returns:
             Tracking results object returned by `detector_model.track`.
         """
-        return detector_model.track(source=source, tracker=self._tracker_name, show=False)
+        return detector_model.track(source=source, tracker=self._tracker_name, show=True, save=True, project=project)
 
     def __repr__(self) -> str:
         return f"UltralyticsTracker(tracker_name='{self._tracker_name}')"
