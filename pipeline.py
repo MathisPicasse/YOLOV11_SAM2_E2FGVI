@@ -14,6 +14,7 @@ import os
 from modules.utils.logger_setup import logger
 from dotenv import load_dotenv
 from datetime import datetime
+import subprocess
 load_dotenv(".env")
 
 # ========================================
@@ -21,7 +22,7 @@ load_dotenv(".env")
 # ========================================
 
 
-NEED_PREPROCESSING = True
+NEED_PREPROCESSING = False
 
 load_dotenv(".env")
 PROJECT_ROOT = Path(__file__).parent
@@ -30,7 +31,7 @@ DATA_PATH_RAW = PROJECT_ROOT / os.getenv("DATA_PATH_RAW")
 DATA_PATH_PROCESSED = PROJECT_ROOT / os.getenv("DATA_PATH_PROCESSED")
 
 
-VIDEO_NAME = "MOT20-01_edited.mp4"
+VIDEO_NAME = "processed_MOT20-01_edited.mp4"
 
 # --- Config Project name and video path ---
 
@@ -67,6 +68,11 @@ MASK_PATH = PROJECT_ROOT / os.getenv("MODELS_PATH") / "Masks" / MASK_MODEL
 
 MASKS_OUTPUT = PROJECT_ROOT / \
     os.getenv("OUTPUTS_PATH") / PROJECT_NAME / "masks"
+
+# --- Config Inpainting---
+SCRIPT_PATH = f"{PROJECT_ROOT}/models/Inpainting/E2FGVI/test.py"
+INPAINTING_MODEL = f"{PROJECT_ROOT}/models/Inpainting/E2FGVI/release_model/E2FGVI-HQ-CVPR22.pth"
+
 
 TARGETS_ENTITIES_IDS = [1]  # Example: Process tracker IDs 1, 2, and 3
 
@@ -172,3 +178,6 @@ for target_entity_id in TARGETS_ENTITIES_IDS:
 # ========================================
 # INPAINTING MODULE
 # ========================================
+
+result = subprocess.run(
+    f"python {SCRIPT_PATH} --model e2fgvi_hq --video {DATA_PATH_PROCESSED}/{PROJECT_NAME}/frames --mask {MASK_PATH}  --ckpt {INPAINTING_MODEL} --set_size --width 864 --height 480", shell=True)
