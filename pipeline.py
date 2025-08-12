@@ -147,53 +147,23 @@ for target_entity_id in TARGETS_ENTITIES_IDS:
             f"Mask output directory ensured/created at: {MASKS_OUTPUT}")
 
     if all_observations_for_targets:
-        cap = None
-        try:
-            cap = cv2.VideoCapture(VIDEO_PATH)
-            if not cap.isOpened():
-                logger.error(
-                    f"Failed to open video for visualization: {VIDEO_PATH}")
-                # Consider raising an error or exiting more gracefully
-                exit(1)
 
-            logger.info(
-                f"Starting visualization and mask creation for target tracker IDs: {TARGETS_ENTITIES_IDS}")
-            frame_idx = 0
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    logger.info("End of video stream for masking.")
-                    break
+        # Getting the list of the processed frames to start masking
+        frames_files = sorted(os.listdir(
+            DATA_PATH_PROCESSED / PROJECT_NAME / "frames"))
+        for frame_idx, frame_file in enumerate(frames_files):
+            frame = cv2.imread(DATA_PATH_PROCESSED /
+                               PROJECT_NAME / "frames" / frame_file)
+            current_frame_observations = [
+                obs for obs in all_observations_for_targets if obs.frame_id == frame_idx
+            ]
 
-                current_frame_observations = [
-                    obs for obs in all_observations_for_targets if obs.frame_id == frame_idx
-                ]
-
-                for obs in current_frame_observations:  # obs is an Observation object
-                    # drawing the bbox on the frame
-                    draw_bbox(frame, obs)
-                try:
-                    mask_filename = f"mask_frame{frame_idx:06d}.png"
-                    mask = masker.create_mask(
-                        frame, current_frame_observations, MASKS_OUTPUT, mask_filename)
-                    if mask is not None:
-                        frame = draw_mask(frame, mask)
-                except Exception as e:
-                    logger.error(
-                        f"Error processing observation {obs} for frame {frame_idx}: {e}", exc_info=True)
-
-                cv2.imshow("Video with bbox + mask", frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    logger.info("User requested to quit visualization.")
-                    break
-                frame_idx += 1
-        except Exception as e:  # Catch any other unexpected errors in the loop
-            logger.error(
-                f"An error occurred during the masking/visualization loop: {e}", exc_info=True)
-        finally:
-            if cap:
-                cap.release()
-            cv2.destroyAllWindows()
-            logger.info("Video visualization and masking finished.")
-
+            mask_filename = f"mask_frame{frame_idx:06d}.png"
+            mask = masker.create_mask(
+                frame,
+                current_frame_observations,
+                MASKS_OUTPUT,
+                mask_filename
+            )
+            frame_idx += 1
     logger.info("######## PIPELINE FINISHED #######")
