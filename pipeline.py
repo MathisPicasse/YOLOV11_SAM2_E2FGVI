@@ -1,5 +1,3 @@
-
-
 import cv2
 from modules.tasks.detector import YoloDetector, Detector
 from modules.tasks.tracker import UltralyticsTracker
@@ -21,7 +19,7 @@ load_dotenv(".env")
 # Paths Configuration
 # ========================================
 
-
+STEPS = ["inpainting"]
 NEED_PREPROCESSING = False
 
 load_dotenv(".env")
@@ -108,76 +106,80 @@ if NEED_PREPROCESSING:
 # OBJECT DETECTION + TRACKING
 # ========================================
 
-logger.info("Initializing modules...")
 
-detector = YoloDetector(MODEL_PATH_DETECTION)
-tracker = UltralyticsTracker(TRACKER_CONFIG_PATH)
+if "detection" in STEPS:
+    logger.info("Initializing modules...")
 
-# A detection pipeline is the combination of a detector and a tracker
-detection_pipeline = Detector(detector=detector, tracker=tracker)
+    detector = YoloDetector(MODEL_PATH_DETECTION)
+    tracker = UltralyticsTracker(TRACKER_CONFIG_PATH)
 
-# === Run Detection + Tracking Pipeline ===
-output_video_path = PROJECT_ROOT / \
-    os.getenv("OUTPUTS_PATH") / PROJECT_NAME / "tracking"
-detection_pipeline.track(VIDEO_PATH, output_video_path)
+    # A detection pipeline is the combination of a detector and a tracker
+    detection_pipeline = Detector(detector=detector, tracker=tracker)
 
-# we create a dictionnary where the key in the entitiy_id and the value is a list with all the observations objects.
-# this helps us for the tracking part.
-detections_by_entity = detection_pipeline.group_detections_by_entity()
+    # === Run Detection + Tracking Pipeline ===
+    output_video_path = PROJECT_ROOT / \
+        os.getenv("OUTPUTS_PATH") / PROJECT_NAME / "tracking"
+    detection_pipeline.track(VIDEO_PATH, output_video_path)
+
+    # we create a dictionnary where the key in the entitiy_id and the value is a list with all the observations objects.
+    # this helps us for the tracking part.
+    detections_by_entity = detection_pipeline.group_detections_by_entity()
 
 
 # ========================================
 # MASKING MODULE
 # ========================================
 
-# === Initialization ===
-masker = Masker(MASK_MODEL)
-# ===  Masking ===
-all_observations_for_targets: List[Observation] = []
-for target_entity_id in TARGETS_ENTITIES_IDS:
+if "masking" in STEPS:
+    # === Initialization ===
+    masker = Masker(MASK_MODEL)
+    # ===  Masking ===
+    all_observations_for_targets: List[Observation] = []
+    for target_entity_id in TARGETS_ENTITIES_IDS:
 
-    if target_entity_id in detections_by_entity:
-        all_observations_for_targets.extend(
-            detections_by_entity[target_entity_id])
-    else:
-        logger.warning(
-            f"Tracker ID {target_entity_id} not found in tracking results. Skipping for masking.")
+        if target_entity_id in detections_by_entity:
+            all_observations_for_targets.extend(
+                detections_by_entity[target_entity_id])
+        else:
+            logger.warning(
+                f"Tracker ID {target_entity_id} not found in tracking results. Skipping for masking.")
 
-    if not all_observations_for_targets:
-        logger.info(
-            "No observations found for the target tracker IDs. Skipping masking and visualization.")
-    else:
-        # Ensure MASKS_OUTPUT directory exists
-        os.makedirs(MASKS_OUTPUT, exist_ok=True)
-        logger.info(
-            f"Mask output directory ensured/created at: {MASKS_OUTPUT}")
+        if not all_observations_for_targets:
+            logger.info(
+                "No observations found for the target tracker IDs. Skipping masking and visualization.")
+        else:
+            # Ensure MASKS_OUTPUT directory exists
+            os.makedirs(MASKS_OUTPUT, exist_ok=True)
+            logger.info(
+                f"Mask output directory ensured/created at: {MASKS_OUTPUT}")
 
-    if all_observations_for_targets:
+        if all_observations_for_targets:
 
-        # Getting the list of the processed frames to start masking
-        frames_files = sorted(os.listdir(
-            DATA_PATH_PROCESSED / PROJECT_NAME / "frames"))
-        for frame_idx, frame_file in enumerate(frames_files):
-            frame = cv2.imread(DATA_PATH_PROCESSED /
-                               PROJECT_NAME / "frames" / frame_file)
-            current_frame_observations = [
-                obs for obs in all_observations_for_targets if obs.frame_id == frame_idx
-            ]
+            # Getting the list of the processed frames to start masking
+            frames_files = sorted(os.listdir(
+                DATA_PATH_PROCESSED / PROJECT_NAME / "frames"))
+            for frame_idx, frame_file in enumerate(frames_files):
+                frame = cv2.imread(DATA_PATH_PROCESSED /
+                                   PROJECT_NAME / "frames" / frame_file)
+                current_frame_observations = [
+                    obs for obs in all_observations_for_targets if obs.frame_id == frame_idx
+                ]
 
-            mask_filename = f"mask_frame{frame_idx:06d}.png"
-            mask = masker.create_mask(
-                frame,
-                current_frame_observations,
-                MASKS_OUTPUT,
-                mask_filename
-            )
-            frame_idx += 1
-    logger.info("######## PIPELINE FINISHED #######")
+                mask_filename = f"mask_frame{frame_idx:06d}.png"
+                mask = masker.create_mask(
+                    frame,
+                    current_frame_observations,
+                    MASKS_OUTPUT,
+                    mask_filename
+                )
+                frame_idx += 1
+        logger.info("######## PIPELINE FINISHED #######")
 
 
 # ========================================
 # INPAINTING MODULE
 # ========================================
 
-result = subprocess.run(
-    f"python {SCRIPT_PATH} --model e2fgvi_hq --video {DATA_PATH_PROCESSED}/{PROJECT_NAME}/frames --mask {MASK_PATH}  --ckpt {INPAINTING_MODEL} --set_size --width 864 --height 480", shell=True)
+if "inpainting" in STEPS:
+    result = subprocess.run(
+        f"python {SCRIPT_PATH} --model e2fgvi_hq --video {DATA_PATH_PROCESSED}/{PROJECT_NAME}/frames --mask {OUTPUTS_PATH}/{PROJECT_NAME}/masks  --ckpt {INPAINTING_MODEL} --set_size --width 864 --height 480", shell=True)
