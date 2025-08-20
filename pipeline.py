@@ -1,6 +1,5 @@
 import cv2
-from modules.tasks.detector import YoloDetector, Detector
-from modules.tasks.tracker import UltralyticsTracker
+from modules.tasks.detector import DetectTrack
 from modules.tasks.masker import Masker
 from modules.data.observations import Observation
 from modules.tasks.preprocessing import preprocess_video
@@ -88,13 +87,9 @@ if NEED_PREPROCESSING:
 
 
 if "detection" in STEPS:
-    logger.info("Initializing modules...")
-
-    detector = YoloDetector(MODEL_PATH_DETECTION)
-    tracker = UltralyticsTracker(TRACKER_CONFIG_PATH)
-
+    
     # A detection pipeline is the combination of a detector and a tracker
-    detection_pipeline = Detector(detector=detector, tracker=tracker)
+    detection_pipeline = DetectTrack(detector=MODEL_PATH_DETECTION, tracker=TRACKER_CONFIG_PATH)
 
     # === Run Detection + Tracking Pipeline ===
     output_video_path = PROJECT_ROOT / \
@@ -116,7 +111,7 @@ if "masking" in STEPS:
     MASKS_OUTPUT = OUTPUTS_PATH / PROJECT_NAME / "masks"
     # ===  Masking ===
     all_observations_for_targets: List[Observation] = []
-    logger.info("Proccessing masking on", TARGETS_ENTITIES_IDS)
+    logger.info(f"Proccessing masking on {TARGETS_ENTITIES_IDS}")
     for target_entity_id in TARGETS_ENTITIES_IDS:
 
         if target_entity_id in detections_by_entity:

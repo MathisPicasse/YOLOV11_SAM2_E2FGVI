@@ -1,165 +1,112 @@
-"""
-File: entity.py
-Author: Mathis Picasse
-Created: 2025-06-01
-Last Modified: 2025-06-01
-Description: Defines the detector and the combination with tracker.
-"""
+# ========================================
+# Author: Mathis Picasse
+# Created on: 2025-06-01
+# Last Modified: 2025-06-01
+# Description: Combines YOLO object detection and tracking into a single class.
+# ========================================
 
 from ultralytics import YOLO
-from abc import ABC, abstractmethod
-from .tracker import BaseTracker, UltralyticsTracker
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 from modules.data.observations import Observation
 from modules.utils.logger_setup import logger
 
-
-class BaseDetector(ABC):
-    """Abstract base class for all object detectors.
-
-    All detectors must implement the `detect` method and expose a `model` property.
+class DetectTrack:
     """
-    @abstractmethod
-    def detect(self, source):
-        pass
+    High-level wrapper class combining YOLO object detection and tracking.
 
-    @property
-    @abstractmethod
-    def model(self):
-        pass
-
-
-class YoloDetector(BaseDetector):
-    """Concrete implementation of BaseDetector using the YOLO model.
+    This class allows running object detection on videos/images and tracks
+    detected objects across frames, providing a structured output with
+    observations grouped by entity ID.
 
     Attributes:
-        _model (YOLO): An instance of the Ultralytics YOLO detector.
+        _model (YOLO): YOLO model instance for detection and tracking.
+        _tracker: Optional tracker configuration or tracker object.
+        _raw_detections (list, optional): Stores raw tracking results per frame.
     """
 
-    def __init__(self, model_path: str):
+    def __init__(self, detector: str, tracker: str):
         """
-        Args:
-            model_path (str): Path to the YOLO model weights (.pt file).
-        """
-        self._model = YOLO(model_path)
-
-    def detect(self, source):
-        """Runs YOLO detection on the input source.
+        Initializes the DetectTrack class with a YOLO model and tracker.
 
         Args:
-            source: Input for detection (image path, frame, video stream, etc.).
-
-        Returns:
-            Detection results.
+            detector (str): Path to YOLO model weights (.pt file) or model identifier.
+            tracker (str): Tracker configuration or tracker name (handled internally by YOLO).
         """
-        return self._model(source)
-
-    @property
-    def model(self):
-        """Returns the YOLO model instance."""
-        return self._model
-
-
-class Detector:
-    """Encapsulates a detector and a tracker to perform video object tracking.
-
-    Attributes:
-        _detector (BaseDetector): The detector used to extract object detections.
-        _tracker (BaseTracker): The tracker responsible for associating detections over time.
-        _raw_detections (Optional[list]): Raw tracking results after processing.
-    """
-
-    def __init__(self, detector: BaseDetector, tracker: BaseTracker):
-        """
-        Args:
-            detector (BaseDetector): A detection model (e.g., YOLO).
-            tracker (BaseTracker): A tracking algorithm (e.g., ByteTrack).
-        """
-        self._detector = detector
+        self._model = YOLO(detector)
         self._tracker = tracker
         self._raw_detections = None
 
     @property
-    def detector(self) -> BaseDetector:
-        """Returns the detector instance."""
-        return self._detector
-
-    @property
-    def tracker(self) -> BaseTracker:
-        """Returns the tracker instance."""
+    def tracker(self) -> str:
+        """Returns the tracker configuration used for tracking."""
         return self._tracker
 
     @property
     def raw_detections(self) -> Optional[list]:
-        """Returns the raw tracking results."""
+        """Returns the raw detection/tracking results after processing a video."""
         return self._raw_detections
 
-    def track(self, video, project):
+    def track(self, video: str, project: str) -> list:
         """
-        Runs detection and tracking on the input video.
+        Runs YOLO detection and tracking on the input video.
 
         Args:
-            video: Input video file path or frame stream.
+            video (str): Path to the video file or stream.
+            project (str): Directory path where tracking video will be saved.
 
         Returns:
-            List of tracking results per frame.
+            list: Raw detection/tracking results from YOLO.
         """
-        self._raw_detections = self.tracker.track(
-            video, self.detector.model, project)
+        self._raw_detections = self._model.track(
+            source=video,
+            project=project,
+            show=True,  # Display the tracking live
+            save=True,  # Save output video/images
+        )
         return self._raw_detections
 
-    def group_detections_by_entity(self) -> Dict[int, Observation]:
+    def group_detections_by_entity(self) -> Dict[int, List[Observation]]:
         """
-        Formats raw object detection results into a dictionary mapping entity IDs to their observations.
+        Organizes raw detection results into a dictionary mapping entity IDs
+        to their observations across frames.
 
-        This function processes the raw detection results stored in `self._raw_results`.
-        For each frame, it iterates over all detected entities, extracting their ID,
-        class, bounding box coordinates, and confidence score. Each detection is
-        converted into an `Observation` object and added to the results dictionary.
-
-        If an entity ID has been detected in previous frames, the new observation
-        is appended to the existing list. Otherwise, a new list is created for that entity.
-
-        Args:
-            self: The class instance containing `_raw_results` as an iterable of detection outputs.
-                Each detection output must have `boxes.id`, `boxes.cls`, `boxes.xyxy`, and `boxes.conf`.
+        Each observation stores:
+            - Frame index
+            - Class ID
+            - Bounding box coordinates
+            - Confidence score
 
         Returns:
-            Dict[int, List[Observation]]:  
-                A dictionary where:
-                - Key: `entity_id` (int) – Unique identifier of the tracked object.
-                - Value: List of `Observation` objects containing detection details for each frame.
+            Dict[int, List[Observation]]: 
+                Key: entity_id (int) – Unique ID for each tracked object.
+                Value: List of Observation objects for that entity across frames.
 
         Logging:
-            - Logs when an entity is detected for the first time in a frame.
-            - Logs when an entity is detected again in subsequent frames.
+            - Logs when a new entity is detected.
+            - Logs when an existing entity is detected again in subsequent frames.
         """
+        detections_by_entity: Dict[int, List[Observation]] = dict()  # Initialize storage
 
-        # Store the observations with a list by entity_id -> Dict[int, List[Observation]]
-        detections_by_entity = dict()
-
-        # Iterating through the results frame by frame
-        for frame_id, results in enumerate(self._raw_detections):
-            # Iterating through the detected entities in the frame
+        # Iterate frame by frame
+        for frame_id, results in enumerate(self._raw_detections or []):
+            # Iterate over all detected entities in the current frame
             for entity_id, class_id, bbox, confidence in zip(
                 results.boxes.id,
                 results.boxes.cls,
                 results.boxes.xyxy,
                 results.boxes.conf
             ):
-                # Create a new Observation object
-                new_observation = Observation(
-                    frame_id, class_id, bbox, confidence)
+                # Create a new Observation for this detection
+                new_observation: Observation = Observation(
+                    frame_id, class_id, bbox, confidence
+                )
 
-                # If the entity has been detected before, append the new observation to its existing list
-                if entity_id.item() in detections_by_entity:
+                entity_key: int = entity_id.item()  # Convert tensor to int
+                if entity_key in detections_by_entity:
                     logger.info(f"entity {entity_id} in frame {frame_id}")
-                    detections_by_entity[entity_id.item()].append(
-                        new_observation)
+                    detections_by_entity[entity_key].append(new_observation)
                 else:
-                    # If this is a new entity, create a new entry in the dictionary with its first observation
-                    logger.info(
-                        f"new entity (id: {entity_id}) in frame {frame_id}"
-                    )
-                    detections_by_entity[entity_id.item()] = [new_observation]
+                    logger.info(f"new entity (id: {entity_id}) in frame {frame_id}")
+                    detections_by_entity[entity_key] = [new_observation]
+
         return detections_by_entity

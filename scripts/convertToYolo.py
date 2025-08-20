@@ -172,67 +172,6 @@ def _parse_annotation_row(
         logging.warning(f"Skipping malformed annotation row: {row}. Error: {e}")
         return None
 
-
-def convert_to_yolo(
-        img_dir: str,
-        annotations_file: str,
-        prefix: str, 
-        output_dir: str,
-        img_width: int,
-        img_height: int,
-        mapped_dict: Dict[int, int],
-        resize_img: bool = False,
-        target_size: Tuple[int, int] = (640, 640)
-):
-    # Create the 'images' and 'labels' directories in the output directory
-    images_output, labels_output = setup_output_dirs(output_dir, ['images', 'labels'])
-
-
-    # Create a dictionary where keys are frame numbers and values are lists of annotations (class_id, x, y, w, h)
-    annotations_by_frame = {}
-
-    # Read the annotation file
-    with open(annotations_file, 'r') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            frame = int(row[0])  # Extract frame number
-            class_id = int(row[7])  # Extract class ID
-            if class_id in mapped_dict:
-                x, y, w_box, h_box = map(float, (row[2], row[3], row[4], row[5]))
-                class_id = mapped_dict[class_id]  # Map to new class ID
-
-                # Initialize frame entry if not present
-                if frame not in annotations_by_frame:
-                    annotations_by_frame[frame] = []
-                
-                # Resize bounding box if resizing is enabled
-                if resize_img:
-                    new_img_width, new_img_height = target_size
-                    x_new, y_new, wbox_new, hbox_new = rescale_bbox_coordinates(
-                        x, y, w_box, h_box, img_width, img_height, new_img_width, new_img_height
-                    )
-                    x_center_norm, y_center_norm, w_box_norm, h_box_norm = normalize_bbox_coordinates(
-                        x_new, y_new, wbox_new, hbox_new, new_img_width, new_img_height
-                    )
-                else:
-                    x_center_norm, y_center_norm, w_box_norm, h_box_norm = normalize_bbox_coordinates(
-                        x, y, w_box, h_box, img_width, img_height
-                    )
-                
-                annotations_by_frame[frame].append((class_id, x_center_norm, y_center_norm, w_box_norm, h_box_norm))
-    
-    # Process and save images and annotations
-    for img_file in sorted(os.listdir(img_dir)):
-        if img_file.lower().endswith(('.jpg', '.jpeg', '.png')):
-            new_name = process_image(img_file, img_dir, images_output, resize_img, target_size, prefix)
-            frame_number = int(img_file.split('.')[0])  # Extract frame number from filename
-            
-            if frame_number in annotations_by_frame:
-                yolo_annotations = annotations_by_frame[frame_number]
-                label_file_path = os.path.join(labels_output, f"{prefix}_{frame_number:06d}.txt")
-                with open(label_file_path, 'w') as label_file:
-                    for annotation in yolo_annotations:
-                        label_file.write(" ".join(map(str, annotation)) + "\n")
 def convert_to_yolo(
     img_dir: str,
     annotations_file: str,
