@@ -1,43 +1,59 @@
-"""
-File: train_yolo.py
-Author: Mathis Picasse
-Description: Script to train YOLO using a pre-trained model.
-"""
+# ========================================
+# Author: Mathis Picasse
+# Created on: 2025-07-02
+# Last Modified: 2025-08-20
+# Description: Script to train YOLO using a pre-trained model
+# ========================================
+
+
 from ultralytics import YOLO
-import logging
 from typing import Dict, Any
+from datetime import datetime
+from modules.utils.logger_setup import logger
+from dotenv import load_dotenv
+from config import (
+    TRAINING,
+    PRETRAINED_MODEL,
+    PRETRAINED_MODEL_VERSION,
+    PRETRAINED_MODEL_PATH,
+    DATASET_YAML_PATH,
+)
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- Configuration ---
-DEFAULT_MODEL_NAME: str = "yolo11n"
-DEFAULT_PATH_TO_MODEL_TEMPLATE: str = f"/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/models/detection/YOLO11v/{DEFAULT_MODEL_NAME}.pt"
-DEFAULT_DATASET_YAML: str = "/home/mapicasse/Documents/02_Academic/Internship/YOLO11_SAM_E2FGVI/training/dataset.yaml"  
-DEFAULT_PROJECT_TEMPLATE: str = f"run_1207/detect/{DEFAULT_MODEL_NAME}"  
+load_dotenv("./.env")
+
 
 try:
-    model = YOLO(DEFAULT_PATH_TO_MODEL_TEMPLATE)
-    logging.info(f"Successfully loaded/initialized model: {DEFAULT_MODEL_NAME}")
+    model = YOLO(PRETRAINED_MODEL_PATH)
+    logger.info(
+        f"Successfully loaded/initialized model: {PRETRAINED_MODEL}{PRETRAINED_MODEL_VERSION}")
 except Exception as e:
-    logging.error(f"An unexpected error occurred while loading/initializing the model '{DEFAULT_PATH_TO_MODEL_TEMPLATE}': {e}", exc_info=True)
-    raise RuntimeError(f"Failed to load/initialize YOLO model from '{DEFAULT_PATH_TO_MODEL_TEMPLATE}'") from e
+    logger.error(
+        f"An unexpected error occurred while loading/initializing the model '{PRETRAINED_MODEL}{PRETRAINED_MODEL_VERSION}': {e}", exc_info=True)
 
 training_parameters: Dict[str, Any] = {
-        "data": DEFAULT_DATASET_YAML,
-        "epochs": 40,            # Number of training epochs
-        "patience": 50,         # Epochs to wait for no observable improvement before early stopping
-        "batch": 8,            # Batch size (adjust based on available GPU memory)
-        "imgsz": 864,           # Input image size 
-        "save": True,           # Save training artifacts (checkpoints, logs, etc.)
-        "cache": True,         # Cache images for faster training (RAM-intensive, use cautiously)
-        "device": "cpu",        # Device to run on: 'cpu', '0' (for GPU 0), '0,1,2,3', etc.
-        "project": DEFAULT_PROJECT_TEMPLATE,# Root directory for saving all related runs
-        "name": f"{DEFAULT_MODEL_NAME}_run_{2}epochs", # Name for the specific training run directory (e.g., yolov8n_run_100epochs)
-        "multi_scale": True,   # Vary image size during training for robustness (can improve mAP)
-        "exist_ok": False,      # If False, errors if 'project/name' already exists, preventing accidental .
-                                # If True, reuses or overwrites the existing directory.
-    }
+    "data": DATASET_YAML_PATH,
+    "epochs": 40,            # Number of training epochs
+    "patience": 50,         # Epochs to wait for no observable improvement before early stopping
+    # Batch size (adjust based on available GPU memory)
+    "batch": 8,
+    "imgsz": 864,           # Input image size
+    # Save training artifacts (checkpoints, logs, etc.)
+    "save": True,
+    # Cache images for faster training (RAM-intensive, use cautiously)
+    "cache": True,
+    # Device to run on: 'cpu', '0' (for GPU 0), '0,1,2,3', etc.
+    "device": "cpu",
+    # Root directory for saving all related runs
+    "project": TRAINING / "run",
+    # Vary image size during training for robustness (can improve mAP)
+    "name": f"{PRETRAINED_MODEL}{PRETRAINED_MODEL_VERSION}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
+    "multi_scale": True,
+    # If False, errors if 'project/name' already exists, preventing accidental .
+    "exist_ok": False,
+    # If True, reuses or overwrites the existing directory.
+}
+
 
 # --- Training ---
 model.train(**training_parameters)
-
