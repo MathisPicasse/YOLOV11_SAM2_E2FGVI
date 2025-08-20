@@ -49,8 +49,7 @@ docs/
 *.pkl
 dataset/
 
-# === Training ===
-training/
+
 
 
 
