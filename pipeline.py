@@ -2,35 +2,39 @@ import cv2
 from modules.tasks.detector import YoloDetector, Detector
 from modules.tasks.tracker import UltralyticsTracker
 from modules.tasks.masker import Masker
-from modules.utils.visualisation import draw_bbox, draw_mask
-from modules.utils.video import create_frames, create_video, get_fps
 from modules.data.observations import Observation
 from modules.tasks.preprocessing import preprocess_video
-from typing import Optional, Tuple, Dict, List
-from pathlib import Path
+from typing import List
 import os
 from modules.utils.logger_setup import logger
-from dotenv import load_dotenv
 from datetime import datetime
 import subprocess
-load_dotenv(".env")
+import sys
+
+from config import (
+    # Pipeline configutation variables
+    STEPS,
+    NEED_PREPROCESSING,
+    VIDEO_NAME,
+    TARGETS_ENTITIES_IDS,
+    # Paths
+    PROJECT_ROOT,
+    DATA_PATH_PROCESSED,
+    DATA_PATH_RAW,
+    OUTPUTS_PATH,
+    MODEL_PATH_DETECTION,
+    TRACKER_CONFIG_PATH,
+    MASK_PATH,
+    INPAINTING_INFERENCE_PATH,
+    INPAINTING_MODEL_PATH,
+)
+
 
 # ========================================
 # Paths Configuration
 # ========================================
-
-STEPS = ["inpainting"]
-NEED_PREPROCESSING = False
-
-load_dotenv(".env")
-PROJECT_ROOT = Path(__file__).parent
-OUTPUTS_PATH = os.getenv("OUTPUTS_PATH")
-DATA_PATH_RAW = PROJECT_ROOT / os.getenv("DATA_PATH_RAW")
-DATA_PATH_PROCESSED = PROJECT_ROOT / os.getenv("DATA_PATH_PROCESSED")
-
-
-VIDEO_NAME = "processed_MOT20-01_edited.mp4"
-
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
 # --- Config Project name and video path ---
 
 datetime_fname = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -47,32 +51,8 @@ if not VIDEO_PATH.exists():
     raise FileNotFoundError(f"Vidéo introuvable : {VIDEO_PATH}")
 
 
-# --- Config détection ---
-MODEL_NAME = os.getenv("MODEL_NAME")
-MODEL_VERSION = os.getenv("MODEL_VERSION")
-
-MODEL_PATH_DETECTION = (
-    PROJECT_ROOT / os.getenv("MODELS_PATH") / "detection" /
-    f"{MODEL_NAME.upper()}v" / f"{MODEL_NAME}{MODEL_VERSION}.pt"
-)
-
-# --- Config tracker ---
-TRACKER_NAME = os.getenv("TRACKER_NAME")
-TRACKER_CONFIG_PATH = PROJECT_ROOT / os.getenv("TRACKER_PATH") / TRACKER_NAME
-
-# --- Config masker ---
-MASK_MODEL = os.getenv("MASK_MODEL")
-MASK_PATH = PROJECT_ROOT / os.getenv("MODELS_PATH") / "Masks" / MASK_MODEL
-
-MASKS_OUTPUT = PROJECT_ROOT / \
-    os.getenv("OUTPUTS_PATH") / PROJECT_NAME / "masks"
-
 # --- Config Inpainting---
-SCRIPT_PATH = f"{PROJECT_ROOT}/models/Inpainting/E2FGVI/test.py"
-INPAINTING_MODEL = f"{PROJECT_ROOT}/models/Inpainting/E2FGVI/release_model/E2FGVI-HQ-CVPR22.pth"
 
-
-TARGETS_ENTITIES_IDS = [1]  # Example: Process tracker IDs 1, 2, and 3
 
 logger.info("######## VIDEO ANALYSIS PIPELINE #######")
 
@@ -132,9 +112,11 @@ if "detection" in STEPS:
 
 if "masking" in STEPS:
     # === Initialization ===
-    masker = Masker(MASK_MODEL)
+    masker = Masker(MASK_PATH)
+    MASKS_OUTPUT = OUTPUTS_PATH / PROJECT_NAME / "masks"
     # ===  Masking ===
     all_observations_for_targets: List[Observation] = []
+    logger.info("Proccessing masking on", TARGETS_ENTITIES_IDS)
     for target_entity_id in TARGETS_ENTITIES_IDS:
 
         if target_entity_id in detections_by_entity:
@@ -144,37 +126,35 @@ if "masking" in STEPS:
             logger.warning(
                 f"Tracker ID {target_entity_id} not found in tracking results. Skipping for masking.")
 
-        if not all_observations_for_targets:
+    if not all_observations_for_targets:
             logger.info(
                 "No observations found for the target tracker IDs. Skipping masking and visualization.")
-        else:
-            # Ensure MASKS_OUTPUT directory exists
-            os.makedirs(MASKS_OUTPUT, exist_ok=True)
-            logger.info(
-                f"Mask output directory ensured/created at: {MASKS_OUTPUT}")
+    else:
+        # Ensure MASKS_OUTPUT directory exists
+        os.makedirs(MASKS_OUTPUT, exist_ok=True)
+        logger.info(
+            f"Mask output directory ensured/created at: {MASKS_OUTPUT}")
 
-        if all_observations_for_targets:
+    if all_observations_for_targets:
 
-            # Getting the list of the processed frames to start masking
-            frames_files = sorted(os.listdir(
-                DATA_PATH_PROCESSED / PROJECT_NAME / "frames"))
-            for frame_idx, frame_file in enumerate(frames_files):
-                frame = cv2.imread(DATA_PATH_PROCESSED /
-                                   PROJECT_NAME / "frames" / frame_file)
-                current_frame_observations = [
-                    obs for obs in all_observations_for_targets if obs.frame_id == frame_idx
-                ]
+        # Getting the list of the processed frames to start masking
+        frames_files = sorted(os.listdir(
+            DATA_PATH_PROCESSED / PROJECT_NAME / "frames"))
+        for frame_idx, frame_file in enumerate(frames_files):
+            frame = cv2.imread(DATA_PATH_PROCESSED /
+                                PROJECT_NAME / "frames" / frame_file)
+            current_frame_observations = [
+                obs for obs in all_observations_for_targets if obs.frame_id == frame_idx
+            ]
 
-                mask_filename = f"mask_frame{frame_idx:06d}.png"
-                mask = masker.create_mask(
+            mask_filename = f"mask_frame{frame_idx:06d}.png"
+            mask = masker.create_mask(
                     frame,
                     current_frame_observations,
                     MASKS_OUTPUT,
                     mask_filename
                 )
-                frame_idx += 1
-        logger.info("######## PIPELINE FINISHED #######")
-
+            frame_idx += 1
 
 # ========================================
 # INPAINTING MODULE
@@ -182,4 +162,4 @@ if "masking" in STEPS:
 
 if "inpainting" in STEPS:
     result = subprocess.run(
-        f"python {SCRIPT_PATH} --model e2fgvi_hq --video {DATA_PATH_PROCESSED}/{PROJECT_NAME}/frames --mask {OUTPUTS_PATH}/{PROJECT_NAME}/masks  --ckpt {INPAINTING_MODEL} --set_size --width 864 --height 480", shell=True)
+        f"python {INPAINTING_INFERENCE_PATH} --model e2fgvi_hq --video {DATA_PATH_PROCESSED}/{PROJECT_NAME}/frames --mask {OUTPUTS_PATH}/{PROJECT_NAME}/masks --ckpt {INPAINTING_MODEL_PATH} --set_size --width 864 --height 480", shell=True)

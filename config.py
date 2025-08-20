@@ -91,7 +91,7 @@ except ValueError as e:
 # Pipeline Configuration
 # ========================================
 
-STEPS = ["inpainting"]
-NEED_PREPROCESSING = False
-VIDEO_NAME = "processed_MOT20-01_edited.mp4"
-TARGETS_ENTITIES_IDS = [1]
+STEPS = ["detection", "masking", "inpainting"]
+NEED_PREPROCESSING = True
+VIDEO_NAME = "MOT20-01_edited.mp4"
+TARGETS_ENTITIES_IDS = [1, 2]
