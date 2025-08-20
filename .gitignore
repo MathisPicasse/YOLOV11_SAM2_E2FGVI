@@ -47,6 +47,7 @@ docs/
 *.npz
 *.csv
 *.pkl
+dataset/
 
 # === Training ===
 training/
