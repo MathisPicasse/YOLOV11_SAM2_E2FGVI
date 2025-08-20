@@ -35,14 +35,12 @@ env_YOLO11_SAM2_E2FGVI/
 # === Logs / Outputs ===
 *.log
 logs/
-outputs/
+
 
 
 # === Données ===
 models/
 docs/
-dataset/raw/
-dataset/processed/
 *.zip
 *.tar.gz
 *.npy
@@ -54,4 +52,4 @@ dataset/processed/
 training/
 
 
-tests/
+
