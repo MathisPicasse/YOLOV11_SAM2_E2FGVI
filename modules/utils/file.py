@@ -4,15 +4,10 @@ Author: Mathis Picasse
 Description: useful functions to work with files.
 """
 
-import logging
 import os
 from typing import Dict, List, Tuple
 
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+from modules.utils.logger_setup import logger
 
 
 def setup_output_dirs(
@@ -45,7 +40,7 @@ def setup_output_dirs(
     # Use a dictionary to store the resulting paths for clear, named access.
     created_paths: Dict[str, str] = {}
 
-    logging.info(f"Setting up output directories in root: '{root_dir}'")
+    logger.info(f"Setting up output directories in root: '{root_dir}'")
 
     # It's good practice to ensure the root directory itself exists.
     os.makedirs(root_dir, exist_ok=True)
@@ -58,11 +53,11 @@ def setup_output_dirs(
             os.makedirs(full_path, exist_ok=True)
             # Store the full path for the return value.
             created_paths[dir_name] = full_path
-            logging.info(f"Ensured directory exists: '{full_path}'")
+            logger.info(f"Ensured directory exists: '{full_path}'")
         except OSError as e:
             # This handles errors like permission denied, which `exist_ok=True`
             # does not suppress.
-            logging.error(f"Could not create directory '{full_path}': {e}")
+            logger.error(f"Could not create directory '{full_path}': {e}")
             raise  # Re-raise the exception to signal failure to the caller.
 
     return created_paths

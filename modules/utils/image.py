@@ -4,18 +4,12 @@ Author: Mathis Picasse
 Description: useful functions to work with images.
 """
 
-import logging
 import numpy as np
 import os
 from typing import Optional, Tuple, Dict, List
 import cv2
 
-# Configure a basic logger for module-level feedback.
-# This allows applications using this module to control log output.
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+from modules.utils.logger_setup import logger
 
 
 def process_image(
@@ -68,7 +62,7 @@ def process_image(
 
     # Resize the image only if a target size is provided.
     if target_size:
-        logging.info(f"Resizing image to {target_size[0]}x{target_size[1]}...")
+        logger.info(f"Resizing image to {target_size[0]}x{target_size[1]}...")
         try:
             img = cv2.resize(img, target_size)
         except cv2.error as e:
@@ -96,7 +90,7 @@ def process_image(
         # This handles potential filesystem errors (e.g., permissions).
         raise IOError(f"Failed to write processed image to: {new_img_path}")
 
-    logging.info(f"Successfully processed image and saved to: {new_img_path}")
+    logger.info(f"Successfully processed image and saved to: {new_img_path}")
 
     return new_img_path
 
@@ -203,6 +197,6 @@ def display_bbox_on_image(
             cv2.putText(output_image, class_label, (x, text_y_pos), font, font_scale, (0,0,0), font_thickness)
         else:
             # Optionally, log a warning if a class_id is not found in class_dict
-            logging.warning(f"Class ID {class_id} not found in class_dict. Skipping label for this box.")
+            logger.warning(f"Class ID {class_id} not found in class_dict. Skipping label for this box.")
     return output_image
          

@@ -7,13 +7,10 @@ Description: useful functions to work with videos.
 
 import os
 import cv2
-import logging
 from typing import Optional, Tuple, Dict
 from modules.utils.geometry import denormalize_bbox_coordinates
 from modules.utils.image import display_bbox_on_image
-
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from modules.utils.logger_setup import logger
 
 def create_frames(
     output_dir: str,
@@ -60,7 +57,7 @@ def create_frames(
 
     source_fps = cap.get(cv2.CAP_PROP_FPS)
     if source_fps <= 0:
-        logging.warning(
+        logger.warning(
             f"Video {path_to_video} has an invalid source FPS ({source_fps}). "
             "Cannot use target_fps for subsampling. Extracting all frames."
         )
@@ -75,7 +72,7 @@ def create_frames(
         # Calculate how many frames to skip.
         # e.g., source=30, target=15 -> interval=2. Keep every 2nd frame.
         frame_skip_interval = round(source_fps / target_fps)
-        logging.info(
+        logger.info(
             f"Source FPS: {source_fps:.2f}, Target FPS: {target_fps}. "
             f"Extracting every {frame_skip_interval} frames."
         )
@@ -96,7 +93,7 @@ def create_frames(
                 try:
                     frame = cv2.resize(frame, resize_dim)
                 except cv2.error as e:
-                    logging.error(f"Failed to resize frame {frame_index}: {e}")
+                    logger.error(f"Failed to resize frame {frame_index}: {e}")
                     frame_index += 1
                     continue  # Skip this frame
 
@@ -104,7 +101,7 @@ def create_frames(
             frame_filename = os.path.join(output_dir, f"{frame_prefix}_{saved_frame_count:05d}.jpg")
             if not cv2.imwrite(frame_filename, frame):
                 # Log a warning if a frame fails to save, but continue.
-                logging.warning(f"Could not write frame to {frame_filename}")
+                logger.warning(f"Could not write frame to {frame_filename}")
             else:
                 saved_frame_count += 1
         
@@ -112,7 +109,7 @@ def create_frames(
     
     # Release the video capture object.
     cap.release()
-    logging.info(f"Successfully extracted {saved_frame_count} frames to '{output_dir}'")
+    logger.info(f"Successfully extracted {saved_frame_count} frames to '{output_dir}'")
 
 
 def create_video(img_dir: str, output_video: str, prefix: str, fps: int, codec: str) -> None:
@@ -163,7 +160,7 @@ def create_video(img_dir: str, output_video: str, prefix: str, fps: int, codec: 
     # Release the video writer and close any OpenCV windows.
     video_writer.release()
     cv2.destroyAllWindows()
-    logging.info(f"Successfully created video at '{output_video}' from {len(images)} frames.")
+    logger.info(f"Successfully created video at '{output_video}' from {len(images)} frames.")
 
 
 
@@ -208,7 +205,7 @@ def get_fps(video_path: str) -> int:
         return output_fps
     
     except Exception as e_unknown: # Why: Catch any other unexpected errors and wrap them.
-        logging.error(f"An unexpected error occurred while getting FPS from {video_path}: {e_unknown}", exc_info=True)
+        logger.error(f"An unexpected error occurred while getting FPS from {video_path}: {e_unknown}", exc_info=True)
         raise RuntimeError(f"An unexpected error occurred while getting FPS from {video_path}.") from e_unknown
     
     finally:
@@ -325,4 +322,4 @@ def create_video_bbox(
     # Finalize the video by releasing the VideoWriter object.
     video_writer.release()
     cv2.destroyAllWindows()
-    logging.info(f"Successfully created video at '{output_video}' from {len(images)} frames.")
+    logger.info(f"Successfully created video at '{output_video}' from {len(images)} frames.")

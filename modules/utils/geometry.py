@@ -4,13 +4,9 @@ Author: Mathis Picasse
 Description: useful functions linked to geometry and especially bounding boxes.
 """
 
-import cv2
 import numpy as np
-import logging
-from typing import Tuple, List, Dict, Optional
+from typing import Tuple
 
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def rescale_bbox_coordinates(
