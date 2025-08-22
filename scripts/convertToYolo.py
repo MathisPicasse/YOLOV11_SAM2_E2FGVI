@@ -1,27 +1,20 @@
-"""
-File: convertToYolo.py
-Author: Mathis Picasse
-Description: Script to convert a MOT dataset to a Yolo dataset.
-"""
+# ========================================
+# Author: Mathis Picasse
+# Created on: 04-2025
+# Last Modified: 22-08-2026
+# Description: Script to convert a MOT dataset to a Yolo dataset.
+# ========================================
 
 import json
 import csv
-import os
-import logging
+from pathlib import Path
+import yaml
 import argparse
 from typing import Dict, Tuple, Union, Optional, List, Any
-
-
 from modules.utils.file import setup_output_dirs
 from modules.utils.image import process_image
 from modules.utils.geometry import rescale_bbox_coordinates, normalize_bbox_coordinates
-
-
-
-
-
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from modules.utils.logger_setup import logger
 
 
 def map_classes(
@@ -54,45 +47,31 @@ def map_classes(
 
     Raises:
         TypeError: If `mot_classes` is not a dictionary.
-        ValueError: If any key in `mot_classes` cannot be converted to an
-                    integer.
-
-    Example:
-        >>> # With class merging
-        >>> classes_to_merge = {'0': 'person', '1': 'car', '7': 'person'}
-        >>> id_map, name_map = map_classes(classes_to_merge)
-        >>> id_map
-        {0: 0, 1: 1, 7: 0}
-        >>> name_map
-        {0: 'person', 1: 'car'}
     """
     if not isinstance(mot_classes, dict):
         raise TypeError("Input 'mot_classes' must be a dictionary.")
 
-    # This will map original IDs (e.g., 7) to new YOLO IDs (e.g., 0)
+    # Get unique class names and sort them for a reproducible order.
+    unique_class_names = sorted(list(set(mot_classes.values())))
+    
+    # Create the mapping from class names to new, sequential IDs.
+    # If 'unique_class_names' was ['bicycle', 'car', 'person']
+    # 'name_to_new_id_map' will be: {'bicycle': 0, 'car': 1, 'person': 2}
+    name_to_new_id_map: Dict[str, int] = {name: i for i, name in enumerate(unique_class_names)}
+    
+    # Create the mapping from original IDs to new IDs.
+    # This dictionary will store the final mapping that the main script needs.
     original_to_new_id_map: Dict[int, int] = {}
-    # This will map new YOLO IDs (e.g., 0) to class names (e.g., "person")
-    new_id_to_name_map: Dict[int, str] = {}
-    # This auxiliary dict helps us find the new ID for a given name efficiently
-    name_to_new_id_map: Dict[str, int] = {}
-
-    new_class_id_counter = 0
+    
     for original_id_key, class_name in mot_classes.items():
+        # Convert the original ID key to an integer.
         original_id_int = int(original_id_key)
-        # Check if we have already assigned a new ID to this class name
-        if class_name in name_to_new_id_map:
-            # If yes, get the existing new ID
-            existing_new_id = name_to_new_id_map[class_name]
-            # Map the current original ID to that existing new ID
-            original_to_new_id_map[original_id_int] = existing_new_id
-        else:
-            # If this is a new class name, assign it the next available new ID
-            new_id = new_class_id_counter
-            # Store the mappings
-            name_to_new_id_map[class_name] = new_id
-            new_id_to_name_map[new_id] = new_id
-            original_to_new_id_map[original_id_int] = new_id
-            new_class_id_counter += 1
+        
+        # Look up the new YOLO ID for the current class name and store the mapping.
+        original_to_new_id_map[original_id_int] = name_to_new_id_map[class_name]
+
+    # Create the reverse mapping from new IDs to class names.
+    new_id_to_name_map: Dict[int, str] = {new_id: name for name, new_id in name_to_new_id_map.items()}
 
     return original_to_new_id_map, new_id_to_name_map
 
@@ -125,63 +104,79 @@ def _parse_annotation_row(
         ValueError: If original image dimensions are not positive when not resizing.
     """
     try:
+        
         frame = int(row[0])
         original_class_id = int(row[7])
         
+        # The script skips the annotation if the ID is not in the mapping dictionary.
         if original_class_id not in mapped_dict:
-            logging.debug(f"Skipping class ID {original_class_id} not in mapped_dict for frame {frame}.")
+            logger.debug(f"Skipping class ID {original_class_id} not in mapped_dict for frame {frame}.")
             return None
-            
+        
+        # Getting the new id
         yolo_class_id = mapped_dict[original_class_id]
+        
+        # Extract and convert the bounding box coordinates.
+        # Coordinates are in top-left format (x_tl, y_tl, w_box, h_box).
         x_tl, y_tl, w_box, h_box = map(float, (row[2], row[3], row[4], row[5]))
 
-        current_img_width = original_img_width
-        current_img_height = original_img_height
-        current_x, current_y, current_w, current_h = x_tl, y_tl, w_box, h_box
-
+        # Initialize variables for normalization.
+        coords_to_normalize = (x_tl, y_tl, w_box, h_box)
+        dims_to_normalize = (original_img_width, original_img_height)
+       
         if resize_img and target_size:
             if original_img_width <= 0 or original_img_height <= 0:
-                logging.error(f"Frame {frame}: Original image dimensions for rescaling must be positive.")
+                logger.error(f"Frame {frame}: Original image dimensions for rescaling must be positive.")
                 return None
 
-            new_img_width, new_img_height = target_size
-            current_x, current_y, current_w, current_h = rescale_bbox_coordinates(
-                x_tl, y_tl, w_box, h_box,
-                original_img_width, original_img_height,
-                new_img_width, new_img_height
+            # Coordinates are rescaled based on the new target size.
+            coords_to_normalize = rescale_bbox_coordinates(
+                x_tl, 
+                y_tl, 
+                w_box, 
+                h_box,
+                *dims_to_normalize, 
+                *target_size
             )
-            current_img_width, current_img_height = new_img_width, new_img_height
+            
+            # The dimensions for normalization become those of the target image.
+            dims_to_normalize = target_size
         
-        # Ensure current dimensions for normalization are positive
-        if current_img_width <= 0 or current_img_height <= 0:
-            logging.warning(
-                f"Frame {frame}, Class {yolo_class_id}: "
-                f"Image dimensions ({current_img_width}x{current_img_height}) "
-                f"for normalization must be positive. Skipping annotation."
-            )
-            return None
-
-        x_center_norm, y_center_norm, w_box_norm, h_box_norm = normalize_bbox_coordinates(
-            current_x, current_y, current_w, current_h,
-            current_img_width, current_img_height
+        # Normalize the final coordinates.
+        x_center_norm, y_center_norm, w_box_norm, h_box_norm = normalize_bbox_coordinates( 
+            *coords_to_normalize,
+            *dims_to_normalize
         )
-        
-        return frame, yolo_class_id, x_center_norm, y_center_norm, w_box_norm, h_box_norm
 
+        return frame, yolo_class_id, x_center_norm, y_center_norm, w_box_norm, h_box_norm
+    
+    # Error handling for row parsing
     except (IndexError, ValueError) as e:
-        logging.warning(f"Skipping malformed annotation row: {row}. Error: {e}")
+        logger.warning(f"Skipping malformed annotation row: {row}. Error: {e}")
         return None
+
+def create_label_file(file_path: str, annotations: Optional[List[Any]] = None):
+    try:
+        with open(file_path, 'w') as label_file:
+            if annotations:
+                for annotation_data in annotations:
+                    label_file.write(" ".join(map(str, annotation_data)) + "\n")
+        logger.debug(f"Saved YOLO annotations to: {file_path}")
+        return True
+    except IOError as e:
+        logger.error(f"Could not write label file {file_path}: {e}")
+        return False
 
 def convert_to_yolo(
     img_dir: str,
     annotations_file: str,
-    output_prefix: str, # Renamed for clarity to match usage
+    output_prefix: str,
     output_dir: str,
-    original_img_width: int, # Renamed for clarity
-    original_img_height: int, # Renamed for clarity
+    original_img_width: int,
+    original_img_height: int,
     mapped_dict: Dict[int, int],
     resize_img: bool = False,
-    target_size: Optional[Tuple[int, int]] = (640, 640), # Made Optional to align with docstring
+    target_size: Optional[Tuple[int, int]] = (640, 640),
     subsample_rate: Optional[int] = None
 ) -> None:
     """
@@ -216,138 +211,146 @@ def convert_to_yolo(
                     positive when `resize_img` is False or when they are needed
                     for rescaling.
     """
-    logging.info(f"Starting YOLO conversion for image directory: {img_dir}")
+    logger.info(f"Starting YOLO conversion for image directory: {img_dir}")
 
-    if not os.path.isdir(img_dir):
-        raise FileNotFoundError(f"Image directory not found: {img_dir}")
-    if not os.path.isfile(annotations_file):
-        raise FileNotFoundError(f"Annotations file not found: {annotations_file}")
+    img_dir_path = Path(img_dir)
+    annotations_file_path = Path(annotations_file)
+    
+    # 1. Checking parameters and input paths conformity
+    if not img_dir_path.exists(): 
+        raise FileNotFoundError(f"Image directory not found: {img_dir_path}")
+    if not annotations_file_path.exists():
+        raise FileNotFoundError(f"Annotations file not found: {annotations_file_path}")
 
     if not resize_img and (original_img_width <= 0 or original_img_height <= 0):
         raise ValueError(
             "Original image width and height must be positive if not resizing."
         )
-    if resize_img and not target_size: # target_size must be valid if resizing
+        
+    if resize_img and not target_size:
         raise ValueError("target_size must be provided and valid if resize_img is True.")
 
-
-    # Create the 'images' and 'labels' directories in the output directory
+    # 2. Setting up output directories
     dir_paths = setup_output_dirs(output_dir, ['images', 'labels'])
-    images_output_dir = dir_paths['images']
-    labels_output_dir = dir_paths['labels']
+    images_output_dir = Path(dir_paths['images'])
+    labels_output_dir = Path(dir_paths['labels'])
 
+    # 3. Reading and processing annotations
     annotations_by_frame: Dict[int, List[Tuple[int, float, float, float, float]]] = {}
-    logging.info(f"Reading annotations from: {annotations_file}")
+    logger.info(f"Reading annotations from: {annotations_file_path}")
+    
     try:
-        with open(annotations_file, 'r', newline='') as f: # Added newline='' for csv
+        # Opening the single annotation file with error handling
+        with open(annotations_file_path, 'r', newline='') as f:
             reader = csv.reader(f)
-            for i, row in enumerate(reader):
+            for row in reader: # The index 'i' is not used here, so it can be ignored
                 parsed_annotation = _parse_annotation_row(
-                    row, mapped_dict, original_img_width, original_img_height,
-                    resize_img, target_size
+                    row, 
+                    mapped_dict, 
+                    original_img_width, 
+                    original_img_height,
+                    resize_img, 
+                    target_size
                 )
+                # Add the annotation to the list for the corresponding frame
                 if parsed_annotation:
                     frame, class_id, x_c, y_c, w_n, h_n = parsed_annotation
                     if frame not in annotations_by_frame:
                         annotations_by_frame[frame] = []
                     annotations_by_frame[frame].append((class_id, x_c, y_c, w_n, h_n))
     except IOError as e:
-        logging.error(f"Could not read annotations file {annotations_file}: {e}")
+        logger.error(f"Could not read annotations file {annotations_file_path}: {e}")
         raise
-    except Exception as e: # Catch any other unexpected errors during CSV processing
-        logging.error(f"Unexpected error processing CSV file {annotations_file}: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error processing CSV file {annotations_file_path}: {e}")
         raise
     
-    logging.info(f"Processing images from: {img_dir}")
+    # 4. Processing images and writing label files
+    logger.info(f"Processing images from: {img_dir_path}")
     processed_image_count = 0
     
-    # Get a sorted list of image files to ensure consistent order for subsampling
-    image_files = sorted([
-        f for f in os.listdir(img_dir) 
-        if f.lower().endswith(('.jpg', '.jpeg', '.png'))
-    ])
-
-    for i, img_filename in enumerate(image_files):
-        # If subsampling is enabled, skip frames that are not on the interval
+    image_files = sorted([f for f in img_dir_path.iterdir() if f.suffix.lower() in ['.jpg', '.jpeg', '.png']])
+    
+    for i, img_path in enumerate(image_files):
+        # Handling subsampling
         if subsample_rate and (i % subsample_rate != 0):
             continue
 
-        full_img_path = os.path.join(img_dir, img_filename)
         effective_target_size = target_size if resize_img else None
         
+        # Processing and saving the image
         try:
-            # process_image saves the image with the prefix already.
-            # It returns the basename of the saved image.
-            _ = process_image( # We don't need the returned basename here
-                img_path=full_img_path,
+            _ = process_image(
+                img_path=img_path,
                 output_dir=images_output_dir,
                 output_prefix=output_prefix,
                 target_size=effective_target_size
             )
             processed_image_count +=1
         except (FileNotFoundError, IOError) as e:
-            logging.error(f"Failed to process image {full_img_path}: {e}")
-            continue # Skip to next image if one fails
+            logger.error(f"Failed to process image {img_path}: {e}")
+            continue 
 
+        # Extracting the frame number from the filename
         try:
-            # Assuming filename format like '000001.jpg'
-            frame_number_str = os.path.splitext(img_filename)[0]
+            frame_number_str = img_path.stem
             frame_number = int(frame_number_str)
         except ValueError:
-            logging.warning(
-                f"Could not extract frame number from image filename: {img_filename}. "
+            logger.warning(
+                f"Could not extract frame number from image filename: {img_path.name}. "
                 f"Skipping annotation saving for this image."
             )
             continue
-            
+        
+        # Creating the label file path
+        label_filename = f"{output_prefix}_{frame_number:06d}.txt"
+        label_file_path = labels_output_dir / label_filename
+        
+        # writing the annotation in the annotation file or create it
         if frame_number in annotations_by_frame:
             yolo_annotations = annotations_by_frame[frame_number]
-            # Use the original frame number for the label filename, prefixed.
-            label_filename = f"{output_prefix}_{frame_number:06d}.txt"
-            label_file_path = os.path.join(labels_output_dir, label_filename)
-            
-            try:
-                with open(label_file_path, 'w') as label_file:
-                    for annotation_data in yolo_annotations:
-                        # Ensure all parts of annotation_data are strings for join
-                        label_file.write(" ".join(map(str, annotation_data)) + "\n")
-                logging.debug(f"Saved YOLO annotations to: {label_file_path}")
-            except IOError as e:
-                logging.error(f"Could not write label file {label_file_path}: {e}")
+            create_label_file(label_file_path, yolo_annotations)
         else:
-            logging.info(f"No annotations found for frame {frame_number} (image: {img_filename}).")
-            # Optionally, create an empty label file if no annotations exist for an image
-            # This is often required by YOLO training scripts.
-            label_filename = f"{output_prefix}_{frame_number:06d}.txt"
-            label_file_path = os.path.join(labels_output_dir, label_filename)
-            try:
-                with open(label_file_path, 'w') as label_file:
-                    pass # Creates an empty file
-                logging.debug(f"Created empty label file for frame {frame_number}: {label_file_path}")
-            except IOError as e:
-                 logging.error(f"Could not create empty label file {label_file_path}: {e}")
+            logger.info(f"No annotations found for frame {frame_number} (image: {img_path.name}). Creating empty label file.")
+            create_label_file(label_file_path)
 
-
-    logging.info(
+    logger.info(
         f"YOLO conversion completed for {output_prefix}. Processed {processed_image_count} images. "
         f"Output in: {output_dir}"
     )
 
+def validate_config(config: Dict[str, Any]) -> None: 
+    """
+    Validates the structure and content of a configuration dictionary.
 
-def _validate_config(config: Dict[str, Any]) -> None:
-    """Validates the structure and presence of essential keys in the config."""
+    This function ensures that the JSON configuration dictionary contains
+    all required keys and that their values are of the correct type and format.
+    It is designed to be called at the beginning of the script to halt
+    execution with an explicit error if the configuration is invalid.
+
+    Args:
+        config (Dict[str, Any]): The configuration dictionary loaded
+                                 from a JSON file.
+
+    Raises:
+        ValueError: If a required key is missing, if a value is of the wrong type,
+                    or if a validity condition is not met (e.g., non-positive
+                    image dimensions or a key is missing when required).
+    """
+    
     required_top_level_keys = [
-        "PathToDataFolders", "Folders", "OutputDir", "Classes",
-        "ResizeImages" # TargetSize is optional if ResizeImages is false
+        "PathToDataFolders", "OutputDir", "Classes", "ResizeImages"
     ]
+    required_folders_keys = ["train_folders"]
+    optional_folders_keys = ["val_folders", "test_folders"]
+    
+    # 1. Validate top-level keys
     for key in required_top_level_keys:
         if key not in config:
             raise ValueError(f"Missing required configuration key: '{key}' in JSON file.")
     
     if not isinstance(config["PathToDataFolders"], str):
         raise ValueError("'PathToDataFolders' must be a string.")
-    if not isinstance(config["Folders"], dict):
-        raise ValueError("'Folders' must be a dictionary in JSON config.")
     if not isinstance(config["OutputDir"], str):
         raise ValueError("'OutputDir' must be a string.")
     if not isinstance(config["Classes"], dict):
@@ -355,23 +358,40 @@ def _validate_config(config: Dict[str, Any]) -> None:
     if not isinstance(config["ResizeImages"], bool):
         raise ValueError("'ResizeImages' must be a boolean.")
 
+    # 2. Validate resizing and subsampling parameters
     if config["ResizeImages"]:
         if "TargetSize" not in config:
             raise ValueError("'TargetSize' is required when 'ResizeImages' is true.")
         if not (isinstance(config["TargetSize"], list) and len(config["TargetSize"]) == 2 and
                 all(isinstance(dim, int) and dim > 0 for dim in config["TargetSize"])):
             raise ValueError("'TargetSize' must be a list of two positive integers [width, height].")
-
+    
     if "SubsampleRate" in config:
         if not (isinstance(config["SubsampleRate"], int) and config["SubsampleRate"] > 1):
             raise ValueError("'SubsampleRate' must be an integer greater than 1.")
+            
+    # 3. Validate folder keys (train, val, test)
+    # Check that the required keys are present and are dictionaries
+    for key in required_folders_keys:
+        if key not in config:
+            raise ValueError(f"Missing required configuration key: '{key}'.")
+        if not isinstance(config[key], dict):
+            raise ValueError(f"'{key}' must be a dictionary.")
 
-    for folder_name, dims in config["Folders"].items():
-        if not (isinstance(dims, list) and len(dims) == 2 and
-                all(isinstance(d, int) and d > 0 for d in dims)):
-            raise ValueError(
-                f"Dimensions for folder '{folder_name}' must be a list of two positive integers. Got: {dims}"
-            )
+    # Check that optional keys are dictionaries if they are present
+    for key in optional_folders_keys:
+        if key in config and not isinstance(config[key], dict):
+            raise ValueError(f"'{key}' must be a dictionary.")
+    
+    # 4. Validate the dimensions of each folder
+    for folder_key in required_folders_keys + [k for k in optional_folders_keys if k in config]:
+        for folder_name, dims in config[folder_key].items():
+            if not (isinstance(dims, list) and len(dims) == 2 and
+                    all(isinstance(d, int) and d > 0 for d in dims)):
+                raise ValueError(
+                    f"Dimensions for folder '{folder_name}' in '{folder_key}' must be a list of two positive integers. Got: {dims}"
+                )
+
 
 
 def main():
@@ -380,6 +400,7 @@ def main():
     Parses command-line arguments for the JSON configuration file,
     loads the configuration, and processes each specified dataset folder.
     """
+    # 1. Argument Parsing and Configuration Loading
     parser = argparse.ArgumentParser(
         description="Converts MOT datasets to YOLO format based on a JSON configuration."
     )
@@ -389,124 +410,143 @@ def main():
         help="Path to the JSON configuration file."
     )
     args = parser.parse_args()
-    logging.info(f"Script started with arguments: {args}")
+    logger.info(f"Script started with arguments: {args}")
 
+    # Load and validate the JSON configuration.
     try:
         with open(args.json_config_file, "r") as f_json:
             config_data = json.load(f_json)
-        logging.info(f"Successfully loaded JSON configuration from {args.json_config_file}")
-        _validate_config(config_data)
+        logger.info(f"Successfully loaded JSON configuration from {args.json_config_file}")
+        # Assuming validate_config has been updated to handle the new structure
+        validate_config(config_data)
     except FileNotFoundError:
-        logging.error(f"Configuration file not found: {args.json_config_file}")
+        logger.error(f"Configuration file not found: {args.json_config_file}")
         return
     except json.JSONDecodeError as e:
-        logging.error(f"Error decoding JSON configuration file: {e}")
+        logger.error(f"Error decoding JSON configuration file: {e}")
         return
-    except ValueError as e: # Catches validation errors from _validate_config
-        logging.error(f"Invalid configuration: {e}")
+    except ValueError as e:
+        logger.error(f"Invalid configuration: {e}")
         return
     
+    # Map original class IDs to new sequential YOLO IDs.
     try:
         original_to_yolo_ids, yolo_id_to_names = map_classes(config_data["Classes"])
-        logging.info(f"Class mapping successful. YOLO class names: {yolo_id_to_names}")
+        logger.info(f"Class mapping successful. YOLO class names: {yolo_id_to_names}")
     except (TypeError, ValueError) as e:
-        logging.error(f"Failed to map classes: {e}")
+        logger.error(f"Failed to map classes: {e}")
         return
 
-    base_data_path = config_data["PathToDataFolders"]
-    yolo_output_root = config_data["OutputDir"]
+    # 2. Extract Key Configuration Parameters
+    base_data_path = Path(config_data["PathToDataFolders"])
+    yolo_output_root = Path(config_data["OutputDir"])
     resize_images = config_data["ResizeImages"]
-    subsample_rate = config_data.get("SubsampleRate") # Can be None if not present
+    subsample_rate = config_data.get("SubsampleRate")
 
     if subsample_rate:
-        logging.info(f"Subsampling enabled: keeping 1 of every {subsample_rate} frames.")
+        logger.info(f"Subsampling enabled: keeping 1 of every {subsample_rate} frames.")
     
-    # Prepare target_size_tuple once
     target_size_tuple: Optional[Tuple[int, int]] = None
     if resize_images:
-        # Validation ensures TargetSize exists and is correct if ResizeImages is true
         target_size_list = config_data["TargetSize"]
         target_size_tuple = (target_size_list[0], target_size_list[1])
 
+    # 3. Main Loop: Process Each Dataset Split (train, val, test)
+    # Use a dictionary to manage folders by split type. Use .get() for optional keys.
+    all_folders = {
+        "train": config_data.get("train_folders", {}),
+        "val": config_data.get("val_folders", {}),
+        "test": config_data.get("test_folders", {})
+    }
+    
     processed_folders_count = 0
-    for folder_name, dimensions in config_data["Folders"].items():
-        logging.info(f"--- Processing dataset folder: {folder_name} ---")
-        
-        img_dir = os.path.join(base_data_path, folder_name, "img1")
-        annotations_file = os.path.join(base_data_path, folder_name, "gt", "gt.txt")
-        
-        original_img_width, original_img_height = dimensions
-        
-        # Each sub-dataset (folder) will go into its own subdirectory within the main OutputDir
-        dataset_specific_output_dir = os.path.join(yolo_output_root, f"{folder_name}_yolo")
-        
-        logging.info(f"Source image directory: {img_dir}")
-        logging.info(f"Source annotations file: {annotations_file}")
-        logging.info(f"Output directory for this dataset: {dataset_specific_output_dir}")
-        logging.info(f"Original image dimensions: {original_img_width}x{original_img_height}")
-        logging.info(f"Resize images: {resize_images}")
-        if resize_images:
-            logging.info(f"Target size for resize: {target_size_tuple}")
-        if subsample_rate:
-            logging.info(f"Subsampling rate: {subsample_rate}")
-        
-        try:
-            convert_to_yolo(
-                img_dir=img_dir,
-                annotations_file=annotations_file,
-                output_prefix=folder_name, # Prefix for files within this dataset's output
-                output_dir=dataset_specific_output_dir,
-                original_img_width=original_img_width,
-                original_img_height=original_img_height,
-                mapped_dict=original_to_yolo_ids,
-                resize_img=resize_images,
-                target_size=target_size_tuple,
-                subsample_rate=subsample_rate
-            )
-            processed_folders_count += 1
-            logging.info(f"Successfully converted folder '{folder_name}'.")
-        except FileNotFoundError as e:
-            logging.error(f"Skipping folder '{folder_name}': Required file/directory not found. {e}")
-        except ValueError as e:
-            logging.error(f"Skipping folder '{folder_name}': Invalid value encountered. {e}")
-        except Exception as e:
-            logging.error(f"An unexpected error occurred while converting folder '{folder_name}': {e}", exc_info=True)
-        logging.info(f"--- Finished processing dataset folder: {folder_name} ---")
+    for split_name, folders in all_folders.items():
+        if not folders:
+            continue  
+            
+        logger.info(f"--- Processing {split_name} datasets ---")
+        for folder_name, dimensions in folders.items():
+            # Construct file paths using the Path object and the split name.
+            img_dir = base_data_path / split_name / folder_name / "img1"
+            annotations_file = base_data_path / split_name / folder_name / "gt" / "gt.txt"
+            original_img_width, original_img_height = dimensions
+            
+            # Each sub-dataset will go into its own subdirectory within the split's output folder.
+            dataset_specific_output_dir = yolo_output_root / split_name / f"{folder_name}_yolo"
+                    
+            logger.info(f"Source image directory: {img_dir}")
+            logger.info(f"Source annotations file: {annotations_file}")
+            logger.info(f"Output directory for this dataset: {dataset_specific_output_dir}")
+            logger.info(f"Original image dimensions: {original_img_width}x{original_img_height}")
+            logger.info(f"Resize images: {resize_images}")
+            if resize_images:
+                logger.info(f"Target size for resize: {target_size_tuple}")
+            if subsample_rate:
+                logger.info(f"Subsampling rate: {subsample_rate}")
+            
+            try:
+                # Call the main conversion function. Note: The arguments are converted to strings
+                # to match the function signature, as pathlib objects are not always compatible.
+                convert_to_yolo(
+                    img_dir=str(img_dir),
+                    annotations_file=str(annotations_file),
+                    output_prefix=folder_name,
+                    output_dir=str(dataset_specific_output_dir),
+                    original_img_width=original_img_width,
+                    original_img_height=original_img_height,
+                    mapped_dict=original_to_yolo_ids,
+                    resize_img=resize_images,
+                    target_size=target_size_tuple,
+                    subsample_rate=subsample_rate
+                )
+                processed_folders_count += 1
+                logger.info(f"Successfully converted folder '{folder_name}'.")
+            except FileNotFoundError as e:
+                logger.error(f"Skipping folder '{folder_name}': Required file/directory not found. {e}")
+            except ValueError as e:
+                logger.error(f"Skipping folder '{folder_name}': Invalid value encountered. {e}")
+            except Exception as e:
+                logger.error(f"An unexpected error occurred while converting folder '{folder_name}': {e}", exc_info=True)
+            logger.info(f"--- Finished processing dataset folder: {folder_name} ---")
 
+    # 4. Final step: Create the global dataset.yaml file
     if processed_folders_count > 0:
-        # Create a global data.yaml for the entire converted dataset
         try:
-            # List of relative paths for the data.yaml, e.g., MOT20-01_yolo/images
-            # These paths are relative to the location of the dataset.yaml file.
+            # Build the lists of relative paths for each split
             train_image_paths = [
-                os.path.join(f"{folder_name}_yolo", "images") for folder_name in config_data["Folders"]
-                # Filter out folders that might have failed, if necessary, or assume all are present
+                str(Path("train") / f"{folder_name}_yolo" / "images") 
+                for folder_name in config_data.get("train_folders", {})
             ]
-            # For simplicity, using all converted folders for both train and val.
-            # A more sophisticated setup might involve splitting.
+            val_image_paths = [
+                str(Path("val") / f"{folder_name}_yolo" / "images") 
+                for folder_name in config_data.get("val_folders", {})
+            ]
+            test_image_paths = [
+                str(Path("test") / f"{folder_name}_yolo" / "images") 
+                for folder_name in config_data.get("test_folders", {})
+            ]
             
             data_yaml_content = {
-                'path': os.path.abspath(yolo_output_root), # Absolute path to the dataset root
+                'path': str(yolo_output_root.resolve()),
                 'train': train_image_paths, 
-                'val': train_image_paths,   # Or specify a dedicated validation set
-                'test': '', # Optional: path to test images
+                'val': val_image_paths,
+                'test': test_image_paths,
                 'nc': len(yolo_id_to_names),
                 'names': [yolo_id_to_names[i] for i in sorted(yolo_id_to_names.keys())]
             }
             
-            data_yaml_path = os.path.join(yolo_output_root, "dataset.yaml")
+            data_yaml_path = yolo_output_root / "dataset.yaml"
             with open(data_yaml_path, 'w') as f_yaml:
-                # Using json.dump for simplicity; for true YAML, use PyYAML (import yaml)
-                # yaml.dump(data_yaml_content, f_yaml, sort_keys=False, default_flow_style=False)
-                json.dump(data_yaml_content, f_yaml, indent=4) # JSON is a subset of YAML
-            logging.info(f"Successfully created dataset configuration: {data_yaml_path}")
+                yaml.dump(data_yaml_content, f_yaml, sort_keys=False)
+            logger.info(f"Successfully created dataset configuration: {data_yaml_path}")
         except Exception as e:
-            logging.error(f"Failed to create dataset.yaml: {e}", exc_info=True)
+            logger.error(f"Failed to create dataset.yaml: {e}", exc_info=True)
     else:
-        logging.warning("No folders were processed successfully. Skipping dataset.yaml generation.")
+        logger.warning("No folders were processed successfully. Skipping dataset.yaml generation.")
 
-    logging.info("Script execution finished.")
+    logger.info("Script execution finished.")
 
 if __name__ == "__main__":
     main()
-
+    
+    

@@ -31,7 +31,7 @@ def setup_logger(name):
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    logger.propagate = False  # 🔥 Empêche l'envoi au root logger
+    logger.propagate = False  
 
     if not logger.handlers:  # ⚡ Évite les doublons
         handler = logging.StreamHandler()
