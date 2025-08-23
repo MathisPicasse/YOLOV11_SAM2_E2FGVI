@@ -60,12 +60,14 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
 
    #### Linux/Unix
    <details>
+
     ```bash
    
     pyenv virtualenv 3.10.13 your_env_name
     ```
 
     Associate this environment with the project folder (auto-activated)
+    
     ```bash
    
     pyenv local your_env_name
