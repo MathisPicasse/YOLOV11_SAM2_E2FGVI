@@ -58,16 +58,31 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
 
 3. Create and Configure the Virtual Environment
 
-   ```bash
+  #### Linux/Unix
+   <details>
+    ```bash
    
-   pyenv virtualenv 3.10.13 your_env_name
-   ```
+    pyenv virtualenv 3.10.13 your_env_name
+    ```
 
-   Associate this environment with the project folder (auto-activated)
-   ```bash
+    Associate this environment with the project folder (auto-activated)
+    ```bash
    
-   pyenv local your_env_name
-   ```
+    pyenv local your_env_name
+    ```
+   </details>
+  
+  #### Windows
+   <details>
+   
+    ```bash
+   
+    python -m venv .venv
+    .\.venv\Scripts\Activate.bat
+    ```
+   </details>
+
+
 4. Install Dependencies
    ```bash
    
