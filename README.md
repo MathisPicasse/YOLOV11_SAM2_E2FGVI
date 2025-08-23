@@ -34,7 +34,10 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
    cd YOLOV11_SAM2_E2FGVI
    ```
 
-2. Install Python with <a href="https://github.com/pyenv/pyenv">pyenv</a>
+2. Install Python 
+
+   #### Linux/Unix
+   <details>
   
    We recommend using <a href="https://github.com/pyenv/pyenv">pyenv</a> to manage Python versions. This project uses **Python 3.10.13**:
 
@@ -42,6 +45,16 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
    
    pyenv install 3.10.13
    ```
+   </details>
+  
+   #### Windows
+   <details>
+   pyenv is not available natively. 
+   <ul>Install Python 3.10.13 directly
+   <li>Use <a href="https://github.com/pyenv-win/pyenv-win">pyenv-win</a></li>
+   </ul>
+   </details>
+  
 
 3. Create and Configure the Virtual Environment
 
@@ -53,7 +66,7 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
    Associate this environment with the project folder (auto-activated)
    ```bash
    
-   pyenv local virtual_env_name
+   pyenv local your_env_name
    ```
 4. Install Dependencies
    ```bash
