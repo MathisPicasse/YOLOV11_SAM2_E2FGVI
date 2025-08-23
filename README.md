@@ -70,6 +70,7 @@ test set:
 ## 📊 Results
 Results on test set
 - Custom training of YOLO on MOT17+MOT20 significantly improved **mAP** on dense, multi-person videos.  
+
 | Name                | Precision | Recall    | F1-score | mAP50     | mAP50-95   |
 |---------------------|-----------|-----------|----------|-----------|------------|
 | YOLO11 trained model| 0.884     | 0.770     | 0.823    | 0.853     | 0.442      |
