@@ -35,6 +35,7 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
    ```
 
 2. Install Python with pyenv
+  
   We recommend using <a href="https://github.com/pyenv/pyenv">pyenv</a> to manage Python versions. This project uses Python 3.10.13:a
 
   Install the Python 3.10.13 version:
