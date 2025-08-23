@@ -27,7 +27,7 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
 ---
 
 ## Setup installation 
-1. Clone the Repository (or download it and unzip wherever you want)
+1. Clone this repository to your local machine (or download the ZIP and extract it to any desired location):
 
    ```bash
    git clone https://github.com/MathisPicasse/YOLOV11_SAM2_E2FGVI.git
@@ -36,9 +36,9 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
 
 2. Install Python with pyenv
   
-  We recommend using <a href="https://github.com/pyenv/pyenv">pyenv</a> to manage Python versions. This project uses Python 3.10.13:a
+   We recommend using <a href="https://github.com/pyenv/pyenv">pyenv</a> to manage Python versions. This project uses Python 3.10.13:a
 
-  Install the Python 3.10.13 version:
+   Install the Python 3.10.13 version:
    ```bash
    
    pyenv install 3.10.13
