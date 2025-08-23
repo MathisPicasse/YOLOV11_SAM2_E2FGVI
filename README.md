@@ -58,7 +58,7 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
 
 3. Create and Configure the Virtual Environment
 
-  #### Linux/Unix
+   #### Linux/Unix
    <details>
     ```bash
    
@@ -72,9 +72,9 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
     ```
    </details>
   
-  #### Windows
+   #### Windows
    <details>
-   
+
     ```bash
    
     python -m venv .venv
