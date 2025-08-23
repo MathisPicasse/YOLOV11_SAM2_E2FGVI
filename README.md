@@ -26,6 +26,41 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
 
 ---
 
+## Setup installation 
+1. Clone the Repository (or download it and unzip wherever you want)
+
+   ```bash
+   git clone https://github.com/MathisPicasse/YOLOV11_SAM2_E2FGVI.git
+   cd YOLOV11_SAM2_E2FGVI
+   ```
+
+2. Install Python with pyenv
+  We recommend using <a href="https://github.com/pyenv/pyenv">pyenv</a> to manage Python versions. This project uses Python 3.10.13:a
+
+  Install the Python 3.10.13 version:
+   ```bash
+   
+   pyenv install 3.10.13
+   ```
+
+3. Create and Configure the Virtual Environment
+
+   ```bash
+   
+   pyenv virtualenv 3.10.13 your_env_name
+   ```
+
+   Associate this environment with the project folder (auto-activated)
+   ```bash
+   
+   pyenv local virtual_env_name
+   ```
+4. Install Dependencies
+  ```bash
+   
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
 ## 📂 Dataset Engineering
 
 Most of the work focused on building a **robust dataset** to train YOLO for people detection on challenging videos.  
