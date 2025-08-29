@@ -39,7 +39,8 @@ logs/
 
 
 # === Données ===
-models/
+models/detection
+models/Masks
 docs/
 *.zip
 *.tar.gz

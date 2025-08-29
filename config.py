@@ -49,9 +49,10 @@ try:
     # Specific to the detection model
     DETECTION_MODEL = get_env_variable("DETECTION_MODEL")
     DETECTION_MODEL_VERSION = get_env_variable("DETECTION_MODEL_VERSION")
-    MODEL_PATH_DETECTION = MODELS_PATH / "detection" / \
-        f"{DETECTION_MODEL.upper()}v" / \
-        f"{DETECTION_MODEL}{DETECTION_MODEL_VERSION}.pt"
+    #MODEL_PATH_DETECTION = MODELS_PATH / "detection" / \
+        #f"{DETECTION_MODEL.upper()}v" / \
+        #f"{DETECTION_MODEL}{DETECTION_MODEL_VERSION}.pt"
+    MODEL_PATH_DETECTION = MODELS_PATH / "detection" / "best.pt"
 
     # Specific to the tracker
     TRACKER_NAME = get_env_variable("TRACKER_NAME")

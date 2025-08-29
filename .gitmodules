@@ -1,0 +1,3 @@
+[submodule "models/Inpainting/E2FGVI"]
+	path = models/Inpainting/E2FGVI
+	url = https://github.com/MCG-NKU/E2FGVI.git
