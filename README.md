@@ -111,7 +111,7 @@ This part in highly detailed in my [internship report](assets/internship_report.
 In the folder configs, you will find a file MOT_TO_YOLO.json to specify the parameters to execute the script.
 To use the script we the MOT combined dataset has the following structure: 
 <p align="center">
-  <img src="assets/initial_dataset_structure.svg" alt="initial dataset structure" width="600"/>
+  <img src="assets/initial_dataset_structure.svg" alt="initial dataset structure"/>
 </p>
 
 
