@@ -40,6 +40,8 @@ logs/
 
 # === Données ===
 docs/
+outputs/
+results/
 *.zip
 *.tar.gz
 *.npy
