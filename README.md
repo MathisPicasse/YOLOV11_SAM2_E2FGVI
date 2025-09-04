@@ -96,7 +96,8 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
     pip install --upgrade pip
     pip install -r requirements.txt
     ```
-
+5. Download models 
+   You can fin in the folder `02_weights/` on this [google drive](https://drive.google.com/drive/folders/1bgOJGK5JYptOmDVDqoLaYZq2qA8GkE5T?usp=drive_link) the differents models and weights for each module:
 
 ## 📂 Dataset Engineering
 
@@ -147,7 +148,7 @@ Here is the configuration I used adapted to the dataset.
     "SubsampleRate": 7
 }
 ```
-🔑 Parameter Details  
+🔑 Parameters Details  
 
 - **PathToDataFolders**: Path to the main folder containing the raw MOT sequences. It corresponds to the folder **`training`** in the dataset structure below.
 - **OutputDir**: Path to the output folder. For each sequence, two subfolders will be created:  
