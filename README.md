@@ -16,7 +16,7 @@ It combines **state-of-the-art models** in detection, segmentation and inpaintin
 | **Video Inpainting**  | [E2FGVI](https://github.com/MCG-NKU/E2FGVI) | Remove masked objects while maintaining temporal consistency |
 
 <p align="center">
-  <img src="assets/pipeline_overview.png" alt="Initial dataset structure"/>
+  <img src="assets/pipeline_overview.png" alt="Initial dataset structure" width=600/>
 </p>
 
 
