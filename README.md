@@ -144,7 +144,7 @@ Here is the configuration I used adapted to the dataset.
 ```
 🔑 Parameter Details  
 
-- **PathToDataFolders**: Path to the main folder containing the raw MOT sequences.  
+- **PathToDataFolders**: Path to the main folder containing the raw MOT sequences. It corresponds to the folder **`training`** in the dataset structure below.
 - **OutputDir**: Path to the output folder. For each sequence, two subfolders will be created:  
   - `img/` → resized frames  
   - `annotations/` → YOLO label files (one per frame).  
