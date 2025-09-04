@@ -91,6 +91,8 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
     pip install --upgrade pip
     pip install -r requirements.txt
     ```
+
+
 ## 📂 Dataset Engineering
 
 Most of the work focused on building a **robust dataset** to train YOLO for people detection on challenging videos.  
@@ -103,6 +105,16 @@ The script allow to resize images, compute bounding boxes in the right formatn d
 specigid folder to then train YOLO
 This part in highly detailed in my [internship report](assets/internship_report.pdf)
 👉 The script is available in [`scripts/convertToYolo.py`](scripts/convertToYolo.py).
+
+### How to use the script to convert from the MOT format to a YOLO format 
+
+In the folder configs, you will find a file MOT_TO_YOLO.json to specify the parameters to execute the script.
+To use the script we the MOT combined dataset has the following structure: 
+<p align="center">
+  <img src="assets/initial_dataset_structure.svg" alt="initial dataset structure" width="600"/>
+</p>
+
+
 
 ### Dataset used to train YOLO 
 training set:
