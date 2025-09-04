@@ -15,6 +15,11 @@ It combines **state-of-the-art models** in detection, segmentation and inpaintin
 | **Segmentation**      | [Segment Anything Model (SAM)](https://segment-anything.com/) | Generate binary masks for the detected persons |
 | **Video Inpainting**  | [E2FGVI](https://github.com/MCG-NKU/E2FGVI) | Remove masked objects while maintaining temporal consistency |
 
+<p align="center">
+  <img src="assets/pipeline_overview.png" alt="Initial dataset structure"/>
+</p>
+
+
 ---
 
 ## 🏗️ Project Context
@@ -158,7 +163,7 @@ Here is the configuration I used adapted to the dataset.
 The combined MOT dataset must have the following structure:  
 
 <p align="center">
-  <img src="assets/initial_dataset_structure.svg" alt="Initial dataset structure" width="600"/>
+  <img src="assets/initial_dataset_structure.svg" alt="Initial dataset structure"/>
 </p>
 
 
