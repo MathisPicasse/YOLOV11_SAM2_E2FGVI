@@ -101,7 +101,7 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
    <ul>
      <li>best.pt → models/detection </li>
      <li>E2FGVI-HQ-CVPR22.pth -> models/Inpaiting/E2FGVI/release_model</li>
-     <li>sam2.1_b.pt -> models/Masks<li>
+     <li>sam2.1_b.pt -> models/Masks</li>
    </ul>
 
 ## 📂 Dataset Engineering
