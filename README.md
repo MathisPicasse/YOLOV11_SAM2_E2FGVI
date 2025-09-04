@@ -106,7 +106,7 @@ specigid folder to then train YOLO
 This part in highly detailed in my [internship report](assets/internship_report.pdf)
 👉 The script is available in [`scripts/convertToYolo.py`](scripts/convertToYolo.py).
 
-### How to use the script to convert from the MOT format to a YOLO format 
+### How to use the script to convert from the MOT format to a YOLO format 
 
 In the folder configs, you will find a file MOT_TO_YOLO.json to specify the parameters to execute the script.
 To use the script we the MOT combined dataset has the following structure: 
