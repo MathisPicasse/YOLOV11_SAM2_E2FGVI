@@ -108,7 +108,52 @@ This part in highly detailed in my [internship report](assets/internship_report.
 
 ### 🔧 How to use the script to convert MOT → YOLO
 
-In the folder `configs/`, you will find the file **`MOT_TO_YOLO.json`** to specify the parameters.  
+In the folder `configs/`, you will find the file **`MOT_TO_YOLO.json`** to define all parameters for converting the **MOT dataset → YOLO format**.  
+Here is the configuration I used adapted to the dataset.
+
+```json
+{
+    "PathToDataFolders": "/path/to/MOT/data/",
+    "OutputDir": "/path/to/output/",
+    "Classes": {
+        "1": "person",
+        "2": "person",
+        "7": "person"
+    },
+    "ResizeImages": true,
+    "TargetSize": [864,480],
+    "train_folders": {
+        "MOT17-02": [1920, 1080],
+        "MOT17-05": [640, 480],
+        "MOT17-09": [1920, 1080],
+        "MOT17-13": [1920, 1080],
+        "MOT20-01": [1920, 1080],
+        "MOT20-02": [1920, 1080],
+        "MOT20-05": [1654, 1080]
+    },
+    "val_folders": {
+        "MOT17-04": [1920, 1080],
+        "MOT17-10": [1920, 1080]
+    },
+    "test_folders": {
+        "MOT17-11": [1920, 1080],
+        "MOT20-03": [1173, 880]
+    },
+    "SubsampleRate": 7
+}
+
+🔑 Parameter Details  
+
+- **PathToDataFolders**: Path to the main folder containing the raw MOT sequences.  
+- **OutputDir**: Path to the output folder. For each sequence, two subfolders will be created:  
+  - `img/` → resized frames  
+  - `annotations/` → YOLO label files (one per frame).  
+- **Classes**: Mapping between MOT class IDs and YOLO class names. In this example, IDs `1`, `2`, and `7` are all grouped under the class `person`.  
+- **ResizeImages**: Boolean flag to enable or disable resizing of images.  
+- **TargetSize**: Target resolution `[width, height]` for resizing.  
+- **train_folders / val_folders / test_folders**: Sequences used for training, validation, and testing. The values `[W, H]` correspond to the original resolution of each video (important for annotation conversion).  
+- **SubsampleRate**: Frame subsampling rate. For example, `7` means every 7th frame is kept (0, 7, 14, …).  
+
 
 The combined MOT dataset must have the following structure:  
 
