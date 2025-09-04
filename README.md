@@ -96,8 +96,13 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
     pip install --upgrade pip
     pip install -r requirements.txt
     ```
-5. Download models 
+5. Download models <br>
    You can fin in the folder `02_weights/` on this [google drive](https://drive.google.com/drive/folders/1bgOJGK5JYptOmDVDqoLaYZq2qA8GkE5T?usp=drive_link) the differents models and weights for each module:
+   <ul>
+     <li>best.pt → models/detection </li>
+     <li>E2FGVI-HQ-CVPR22.pth -> models/Inpaiting/E2FGVI/release_model</li>
+     <li>sam2.1_b.pt -> models/Masks<li>
+   </ul>
 
 ## 📂 Dataset Engineering
 
