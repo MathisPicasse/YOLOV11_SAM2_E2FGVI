@@ -141,7 +141,7 @@ Here is the configuration I used adapted to the dataset.
     },
     "SubsampleRate": 7
 }
-
+```
 🔑 Parameter Details  
 
 - **PathToDataFolders**: Path to the main folder containing the raw MOT sequences.  
