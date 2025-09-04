@@ -94,5 +94,5 @@ except ValueError as e:
 
 STEPS = ["detection", "masking", "inpainting"]
 NEED_PREPROCESSING = True
-VIDEO_NAME = "MOT20-01_edited.mp4"
-TARGETS_ENTITIES_IDS = [1, 2]
+VIDEO_NAME = "schoolgirls.mp4"
+TARGETS_ENTITIES_IDS = [26, 11]

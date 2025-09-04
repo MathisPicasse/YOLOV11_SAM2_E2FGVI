@@ -1,4 +1,5 @@
 import cv2
+import time
 from modules.tasks.detector import DetectTrack
 from modules.tasks.masker import Masker
 from modules.data.observations import Observation
@@ -78,13 +79,17 @@ if NEED_PREPROCESSING:
 
     # We need to update the paths because now the video is processed
     # In the next part, we need to use our processed folder
-    VIDO_PATH = DATA_PATH_PROCESSED / PROJECT_NAME / "processed_{VIDEO_NAME}"
     VIDEO_NAME = f"processed_{VIDEO_NAME}"
+    VIDEO_PATH = DATA_PATH_PROCESSED / PROJECT_NAME / VIDEO_NAME
+    
 
 # ========================================
 # OBJECT DETECTION + TRACKING
 # ========================================
 
+time.sleep(5)
+print(VIDEO_PATH)
+time.sleep
 
 if "detection" in STEPS:
     
