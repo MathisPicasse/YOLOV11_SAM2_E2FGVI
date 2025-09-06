@@ -172,7 +172,11 @@ The combined MOT dataset must have the following structure:
   <img src="assets/initial_dataset_structure.svg" alt="Initial dataset structure"/>
 </p>
 
-
+To run the conversion script using the default configuration file: 
+```bash
+cd YOLO11_SAM_E2FGVI
+python3 -m scripts.convertToYolo configs/MOT_TO_YOLO.json
+```
 
 ### Dataset used to train YOLO 
 training set:
