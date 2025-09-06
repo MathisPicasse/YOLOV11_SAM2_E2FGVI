@@ -6,25 +6,6 @@ This project implements a complete **video inpainting pipeline** to automaticall
 It combines **state-of-the-art models** in detection, segmentation and inpainting to achieve robust results on challenging videos (e.g. surveillance footage with multiple people).
 
 ---
-## Table of Contents
-- [Video Inpainting Pipeline + MOT → YOLO Converter](#video-inpainting-pipeline--mot--yolo-converter)
-  - [Models & Pipeline](#-models--pipeline)
-  - [Project Context](#project-Context)
-  - [Setup installation](#Setup-installation)
-  - [Script to convert from MOT dataset format to YOLO format](#script-to-convert-from-mot-dataset-format-to-yolo-format)
-    - [How to use the script to convert MOT → YOLO](#how-to-use-the-script-to-convert-mot--yolo)
-  - [How to Run the Pipeline](#how-to-run-the-pipeline)
-    - [Important Note](#important-note)
-    - [Step 1: Configure the Pipeline](#step-1-configure-the-pipeline)
-      - [STEPS](#steps)
-      - [NEED_PREPROCESSING](#need_preprocessing)
-      - [VIDEO_NAME](#video_name)
-      - [TARGET_ENTITIES_IDS](#target_entities_ids)
-    - [Step 2: run the pipeline](#step-2-run-the-pipeline)
-    - [Dataset used to train YOLO](#dataset-used-to-train-yolo)
-  - [Results](#results)
-
----
 ## Models & Pipeline
 
 | Step                  | Model/Tool | Description |
