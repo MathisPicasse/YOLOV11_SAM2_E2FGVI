@@ -8,7 +8,7 @@ It combines **state-of-the-art models** in detection, segmentation and inpaintin
 ---
 ## Table of Contents
 - [Video Inpainting Pipeline + MOT → YOLO Converter](#video-inpainting-pipeline--mot--yolo-converter)
-  - [Models & Pipeline](#Models-&-Pipeline)
+  - [Models & Pipeline](#-models--pipeline)
   - [Project Context](#Project-Context)
   - [Setup installation](#Setup-installation)
   - [Script to convert from MOT dataset format to YOLO format](#script-to-convert-from-mot-dataset-format-to-yolo-format)
