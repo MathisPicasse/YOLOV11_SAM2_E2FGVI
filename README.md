@@ -37,7 +37,7 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
 1. Clone this repository to your local machine (or download the ZIP and extract it to any desired location):
 
    ```bash
-   git clone https://github.com/MathisPicasse/YOLOV11_SAM2_E2FGVI.git
+   git clone --recurse-submodules https://github.com/MathisPicasse/YOLOV11_SAM2_E2FGVI.git
    cd YOLOV11_SAM2_E2FGVI
    ```
 
