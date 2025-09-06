@@ -97,27 +97,26 @@ It allowed me to explore **Computer Vision** and **dataset engineering** in dept
     pip install -r requirements.txt
     ```
 5. Download models <br>
-   You can fin in the folder `02_weights/` on this [google drive](https://drive.google.com/drive/folders/1bgOJGK5JYptOmDVDqoLaYZq2qA8GkE5T?usp=drive_link) the differents models and weights for each module:
+   You can fin in the folder `02_weights/` on [google drive](https://drive.google.com/drive/folders/1bgOJGK5JYptOmDVDqoLaYZq2qA8GkE5T?usp=drive_link) the differents models and weights for each module:
    <ul>
      <li>best.pt → models/detection </li>
      <li>E2FGVI-HQ-CVPR22.pth -> models/Inpaiting/E2FGVI/release_model</li>
      <li>sam2.1_b.pt -> models/Masks</li>
    </ul>
 
-## 📂 Dataset Engineering
+## 📂 Script to convert from MOT dataset format to YOLO format
 
-Most of the work focused on building a **robust dataset** to train YOLO for people detection on challenging videos.  
+Most of the work focused on building a **robust dataset** to train YOLO for people detection on challenging videos to get bounding boxes as first step of the pipeline .
 
-- Datasets used: [MOT17](https://motchallenge.net/data/MOT17/) + [MOT20](https://motchallenge.net/data/MOT20/) from the **MOTChallenge**.  
-- Custom script to:
-  - **Merge datasets**  
-  - **Convert MOT format → YOLO format**  
-The script allow to resize images, compute bounding boxes in the right formatn downsample the number of frames and saving this in some 
-specigid folder to then train YOLO
-This part in highly detailed in my [internship report](assets/internship_report.pdf)
-👉 The script is available in [`scripts/convertToYolo.py`](scripts/convertToYolo.py).
+- Datasets used: combined [MOT17](https://motchallenge.net/data/MOT17/) + [MOT20](https://motchallenge.net/data/MOT20/) from the **MOTChallenge**.  
 
+The script allow to resize images, compute bounding boxes in the right format, downsample the number of frames and saving this in some 
+specific folder to then train YOLO. 
+
+You can find the dataset already converted to a yolo format on [google drive](https://drive.google.com/drive/folders/1bgOJGK5JYptOmDVDqoLaYZq2qA8GkE5T?usp=drive_link) in `01_dataset/`
 ### 🔧 How to use the script to convert MOT → YOLO
+
+👉 The script is available in [`scripts/convertToYolo.py`](scripts/convertToYolo.py).
 
 In the folder `configs/`, you will find the file **`MOT_TO_YOLO.json`** to define all parameters for converting the **MOT dataset → YOLO format**.  
 Here is the configuration I used adapted to the dataset.
