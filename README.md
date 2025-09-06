@@ -7,7 +7,7 @@ It combines **state-of-the-art models** in detection, segmentation and inpaintin
 
 
 ![Example of result](assets/output.gif)
-![tracking](assets/tracking.gif)
+![tracking](assets/tracking_resized.gif)
 ---
 ## Models & Pipeline
 
