@@ -48,7 +48,6 @@ results/
 *.npz
 *.csv
 *.pkl
-dataset/
 
 
 
