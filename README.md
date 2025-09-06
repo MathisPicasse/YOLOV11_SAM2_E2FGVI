@@ -9,7 +9,7 @@ It combines **state-of-the-art models** in detection, segmentation and inpaintin
 ## Table of Contents
 - [Video Inpainting Pipeline + MOT → YOLO Converter](#video-inpainting-pipeline--mot--yolo-converter)
   - [Models & Pipeline](#-models--pipeline)
-  - [Project Context](#Project-Context)
+  - [Project Context](#project-Context)
   - [Setup installation](#Setup-installation)
   - [Script to convert from MOT dataset format to YOLO format](#script-to-convert-from-mot-dataset-format-to-yolo-format)
     - [How to use the script to convert MOT → YOLO](#how-to-use-the-script-to-convert-mot--yolo)
@@ -25,7 +25,7 @@ It combines **state-of-the-art models** in detection, segmentation and inpaintin
   - [Results](#results)
 
 ---
-## 🔍 Models & Pipeline
+## Models & Pipeline
 
 | Step                  | Model/Tool | Description |
 |-----------------------|------------|-------------|
@@ -40,7 +40,7 @@ It combines **state-of-the-art models** in detection, segmentation and inpaintin
 
 ---
 
-## 🏗️ Project Context
+## Project Context
 
 This project was carried out during my **6-month internship** at the <a href="https://liu.se/en/organisation/liu/isy/cvl">Computer Vision Laboratory</a>, <a href="https://liu.se/en">Linköping University</a>.  
 It allowed me to explore **Computer Vision** and **dataset engineering** in depth.  
