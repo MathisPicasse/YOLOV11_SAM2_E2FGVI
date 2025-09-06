@@ -195,7 +195,7 @@ The following models must be placed in their correct directories:
 
 
 
-### 🛠 Step 1: Configure the Pipeline
+### Step 1: Configure the Pipeline
 All key parameters for the pipeline are managed within the `config.py` file.  
 Open this file and adjust the following variables according to your needs:
 
@@ -217,11 +217,29 @@ Open this file and adjust the following variables according to your needs:
 **NEED_PREPROCESSING**
 - Controls whether the input video needs to be pre-processed.
 - Set to True if you are providing a raw video. The script will automatically extract and resize the frames to 864x480. A processed video will be saved in dataset/processed, and the resized frames will also be stored there.
-- Set to False if you have already pre-processed the video. In this case, VIDEO_NAME must point to the folder name within dataset/processed.
+- Set to False if you have already pre-processed the video.
 
 **VIDEO_NAME**
-If **NEED_PREPROCESSING = True** → set this to the name of your video file located in `dataset/raw`.
-If **NEED_PREPROCESSING = False** → set this to name of your video in the project folder name inside `dataset/processed`.
+- If `NEED_PREPROCESSING = True` → set this to the name of your video file located in `dataset/raw`.
+- If `NEED_PREPROCESSING = False` → set this to name of your video in the project folder name inside `dataset/processed`.
+
+**TARGET_ENTITIES_IDS**
+A list of the IDs of the people you want to remove from the video.
+
+Workflow suggestion:
+
+<ol>
+  <li>Run the pipeline once to get the IDs of all detected people.</li>
+  <li>Re-run it with only the masking and inpainting steps to remove selected IDs.
+</ol>
+
+### Step 2: run the pipeline
+```bash
+  cd YOLO11_SAM2_E2FGVI
+  python3 pipeline.py
+```
+
+
 
 
 ### Dataset used to train YOLO 
