@@ -179,13 +179,13 @@ python3 -m scripts.convertToYolo configs/MOT_TO_YOLO.json
 
 
 
-# 🚀 How to Run the Pipeline
+## 🚀 How to Run the Pipeline
 
 Follow these steps to run the complete video inpainting pipeline.
 
 ---
 
-## ⚠️ Important Note
+### ⚠️ Important Note
 Before you begin, ensure you have completed the **Setup installation steps**, especially **Step 5: Download models**.  
 The following models must be placed in their correct directories:
 
@@ -193,15 +193,14 @@ The following models must be placed in their correct directories:
 - `E2FGVI-HQ-CVPR22.pth` → `models/Inpaiting/E2FGVI/release_model`  
 - `sam2.1_b.pt` → `models/Masks`
 
----
 
-## 🛠 Step 1: Configure the Pipeline
+
+### 🛠 Step 1: Configure the Pipeline
 All key parameters for the pipeline are managed within the `config.py` file.  
 Open this file and adjust the following variables according to your needs:
 
----
 
-### **STEPS**
+**STEPS**
 - A list of strings defining which parts of the pipeline to execute.  
 - Useful if you want to run only a specific part (e.g., skip detection and go straight to inpainting).
 - **Available steps**:  
@@ -211,7 +210,12 @@ Open this file and adjust the following variables according to your needs:
 - **Example**:  
   ```python
   STEPS = ["masking", "inpainting"]
-  ``
+  ```
+  This will skip the detection step.
+
+
+**NEED_PREPROCESSING**
+
 
 ### Dataset used to train YOLO 
 training set:
