@@ -5,7 +5,9 @@
 This project implements a complete **video inpainting pipeline** to automatically remove people from videos.  
 It combines **state-of-the-art models** in detection, segmentation and inpainting to achieve robust results on challenging videos (e.g. surveillance footage with multiple people).
 
-![Example of result](assets/output.gif)
+<p style="text-align: center;">
+  ![Example of result](assets/output.gif)
+</p>
 
 ---
 ## Models & Pipeline
